@@ -40,8 +40,8 @@ object Main extends App with SimpleRoutingApp {
                             complete("OK")
                     }
                 } ~ get {
-                    parameters('x.as[Long], 'y.as[Long]) {
-                        (x, y) =>
+                    parameters('x.as[Long], 'y.as[Long], 'max.as[Long]) {
+                        (x, y, max) =>
                             val coll = getCollection()
                             val query = new BasicDBObject()
                             val loc = new BasicDBObject()
@@ -50,6 +50,7 @@ object Main extends App with SimpleRoutingApp {
                             near.put("1", y)
                             loc.put("$near", near)
                             query.put("loc", loc)
+                            query.put("maxDistance", max)
 
                             val results = coll.find(query).limit(50)
                             complete(com.mongodb.util.JSON.serialize(results))
