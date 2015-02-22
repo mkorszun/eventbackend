@@ -1,12 +1,12 @@
 import akka.actor._
-import com.mongodb.casbah.{MongoClient, MongoClientURI}
-import com.mongodb.{BasicDBList, BasicDBObject, DBCollection}
+import com.mongodb.DBCursor
 import model.Event
 import spray.routing.SimpleRoutingApp
 
 object Main extends App with SimpleRoutingApp {
 
     implicit val system = ActorSystem("my-system")
+    implicit val dbService = new db.DBService()
 
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
 
@@ -22,48 +22,17 @@ object Main extends App with SimpleRoutingApp {
                 post {
                     entity(as[Event]) {
                         event =>
-                            val coll = getCollection();
-                            val doc = new BasicDBObject()
-
-                            doc.put("user_id", event.user_id)
-                            doc.put("headline", event.headline)
-                            doc.put("cost", event.cost)
-                            doc.put("duration", event.duration)
-                            doc.put("description", event.description)
-
-                            val loc = new BasicDBObject()
-                            loc.put("x", event.x)
-                            loc.put("y", event.y)
-                            doc.put("loc", loc)
-
-                            coll.insert(doc)
+                            dbService.saveEvent(event)
                             complete("OK")
                     }
                 } ~ get {
-                    parameters('x.as[Long], 'y.as[Long], 'max.as[Long]) {
+                    parameters('x.as[Double], 'y.as[Double], 'max.as[Long]) {
                         (x, y, max) =>
-                            val coll = getCollection()
-                            val query = new BasicDBObject()
-                            val loc = new BasicDBObject()
-                            val near = new BasicDBList()
-                            near.put("0", x)
-                            near.put("1", y)
-                            loc.put("$near", near)
-                            query.put("loc", loc)
-                            query.put("maxDistance", max)
-
-                            val results = coll.find(query).limit(50)
-                            complete(com.mongodb.util.JSON.serialize(results))
+                            val events: DBCursor = dbService.findEvents(x, y, max)
+                            complete(dbService.toJson(events))
                     }
                 }
             }
-    }
-
-    private def getCollection(): DBCollection = {
-        val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
-        val mongoClient = MongoClient(uri)
-        val db = mongoClient(uri.database.get)
-        db.getCollection("events")
     }
 }
 
