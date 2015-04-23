@@ -8,9 +8,13 @@ version := "1.0"
 
 scalaVersion := "2.11.2"
 
+crossPaths := false
+
 resolvers += "spray repo" at "http://repo.spray.io"
 
 resolvers += "spray nightlies" at "http://nightlies.spray.io"
+
+resolvers += DefaultMavenRepository
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka"  %% "akka-actor"          % "2.3.6",
@@ -21,6 +25,12 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += "org.mongodb" %% "casbah" % "2.7.2"
+
+libraryDependencies += "com.stormpath.sdk" % "stormpath-sdk-api" % "1.0.RC4.2"
+
+libraryDependencies += "com.stormpath.sdk" % "stormpath-sdk-httpclient" % "1.0.RC4.2" exclude("org.apache.httpcomponents","httpclient")
+
+libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.4"
 
 scalacOptions ++= Seq(
   "-unchecked",
