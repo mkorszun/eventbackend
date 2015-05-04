@@ -5,9 +5,12 @@ import akka.pattern.ask
 import akka.util.Timeout
 import auth.TokenAuthenticator
 import com.mongodb.DBCursor
-import model.{Event, User}
+import model.{APIError, Event, User}
 import service.{GetUser, UserService}
-import spray.routing.SimpleRoutingApp
+import spray.http.StatusCodes
+import spray.http.StatusCodes._
+import spray.routing.{AuthenticationFailedRejection, _}
+import spray.util.LoggingContext
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -38,22 +41,57 @@ object Main extends App with SimpleRoutingApp {
                 complete("OK")
             }
         } ~
-            authenticate(authenticator) { user =>
-                path("event") {
-                    post {
-                        entity(as[Event]) {
-                            event =>
-                                dbService.saveEvent(event)
-                                complete("OK")
-                        }
-                    } ~ get {
-                        parameters('x.as[Double], 'y.as[Double], 'max.as[Long]) {
-                            (x, y, max) =>
-                                val events: DBCursor = dbService.findEvents(x, y, max)
-                                complete(dbService.toJson(events))
+            handleRejections(MyRejectionHandler.jsonRejectionHandler) {
+                handleExceptions(MyExceptionHandler.myExceptionHandler) {
+                    authenticate(authenticator) { user =>
+                        path("event") {
+                            post {
+                                entity(as[Event]) {
+                                    event =>
+                                        dbService.saveEvent(event)
+                                        complete("OK")
+                                }
+                            } ~ get {
+                                parameters('x.as[Double], 'y.as[Double], 'max.as[Long]) {
+                                    (x, y, max) =>
+                                        val events: DBCursor = dbService.findEvents(x, y, max)
+                                        complete(dbService.toJson(events))
+                                }
+                            }
                         }
                     }
                 }
             }
     }
+
+    object MyRejectionHandler {
+
+        import format.ErrorJsonFormat._
+        import spray.httpx.SprayJsonSupport._
+
+        implicit val jsonRejectionHandler = RejectionHandler {
+            case AuthenticationFailedRejection(msg, cause) :: Nil =>
+                complete(StatusCodes.BadRequest, APIError(msg.toString))
+            case _ =>
+                complete(StatusCodes.BadRequest, APIError("Failed to process request"))
+        }
+    }
+
+    object MyExceptionHandler {
+
+        import format.ErrorJsonFormat._
+        import spray.httpx.SprayJsonSupport._
+
+        implicit def myExceptionHandler(implicit log: LoggingContext) =
+
+            ExceptionHandler {
+                case e: Exception =>
+                    requestUri { uri =>
+                        log.warning("Request to {} could not be handled normally", uri)
+                        val error: APIError = new APIError(e.getMessage)
+                        complete(InternalServerError, error)
+                    }
+            }
+    }
+
 }
