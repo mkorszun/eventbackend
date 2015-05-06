@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"  %% "akka-slf4j"          % "2.3.6",
   "io.spray"            % "spray-can_2.11"      % "1.3.2",
   "io.spray"            % "spray-routing_2.11"  % "1.3.2",
-  "io.spray"            % "spray-json_2.11"     % "1.3.1"
+  "io.spray"            % "spray-json_2.11"     % "1.3.1",
+  "ch.qos.logback"      % "logback-classic"     % "1.0.9"
 )
 
 libraryDependencies += "org.mongodb" %% "casbah" % "2.7.2"
