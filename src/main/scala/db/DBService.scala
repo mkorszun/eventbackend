@@ -2,15 +2,15 @@ package db
 
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import com.mongodb.{BasicDBObject, DBCollection, DBCursor}
-import model.Event
+import model.{Event, User}
 
 class DBService {
 
     val collection = getCollection()
 
-    def saveEvent(event: Event) {
+    def saveEvent(user: User, event: Event) {
         val doc = new BasicDBObject()
-        doc.put("user_id", event.user_id)
+        doc.put("user_id", user.id)
         doc.put("headline", event.headline)
         doc.put("cost", event.cost)
         doc.put("duration", event.duration)

@@ -48,7 +48,7 @@ object Main extends App with SimpleRoutingApp {
                             post {
                                 entity(as[Event]) {
                                     event =>
-                                        dbService.saveEvent(event)
+                                        dbService.saveEvent(user, event)
                                         complete("OK")
                                 }
                             } ~ get {
