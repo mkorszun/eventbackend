@@ -5,7 +5,8 @@ import akka.pattern.ask
 import akka.util.Timeout
 import auth.TokenAuthenticator
 import com.mongodb.DBCursor
-import model.{APIError, Event, User}
+import com.stormpath.sdk.directory.CustomData
+import model.{UserData, APIError, Event, User}
 import service.{GetUser, UserService}
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
@@ -34,6 +35,7 @@ object Main extends App with SimpleRoutingApp {
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
 
         import format.EventJsonFormat._
+        import format.UserDataJsonFormat._
         import spray.httpx.SprayJsonSupport._
 
         path("") {
@@ -56,6 +58,18 @@ object Main extends App with SimpleRoutingApp {
                                     (x, y, max) =>
                                         val events: DBCursor = dbService.findEvents(x, y, max)
                                         complete(dbService.toJson(events))
+                                }
+                            }
+                        } ~
+                        path("user") {
+                            post {
+                                entity(as[UserData]) {
+                                    userData =>
+                                        val customData: CustomData = user.account.getCustomData
+                                        customData.put("photo_url", userData.photo_url)
+                                        customData.put("age", userData.age.toString)
+                                        user.account.save()
+                                        complete("OK")
                                 }
                             }
                         }
