@@ -17,9 +17,7 @@ class UserService extends Actor {
         case GetUser(token) =>
             try {
                 val account: Account = getAccount(token)
-                val email: String = account.getEmail
-                val id: String = getId(account)
-                sender ! Some(User(id, email))
+                sender ! Some(User(account))
             } catch {
                 case e: Exception =>
                     sender ! None
@@ -31,11 +29,6 @@ class UserService extends Actor {
         val requestBuilder: FacebookAccountRequestBuilder = Providers.FACEBOOK.account()
         val accountRequest: ProviderAccountRequest = requestBuilder.setAccessToken(token).build()
         return AuthApplication.auth_app.getAccount(accountRequest).getAccount
-    }
-
-    def getId(account: Account): String = {
-        val uri: String = account.getHref()
-        return uri.replaceFirst(".*/([^/?]+).*", "$1")
     }
 }
 
