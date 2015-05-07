@@ -1,22 +1,45 @@
 package db
 
+import com.mongodb.casbah.commons.MongoDBList
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import com.mongodb.{BasicDBObject, DBCollection, DBCursor}
+import com.stormpath.sdk.directory.CustomData
 import model.{Event, User}
 
 class DBService {
 
     val collection = getCollection()
 
+    def uuid = java.util.UUID.randomUUID.toString
+
     def saveEvent(user: User, event: Event) {
         val doc = new BasicDBObject()
-        doc.put("user_id", user.id)
+        doc.put("_id", uuid)
+        doc.put("user", userToObject(user))
+        doc.put("spots", event.spots)
+        doc.put("date_and_time", event.date_and_time)
         doc.put("headline", event.headline)
         doc.put("cost", event.cost)
         doc.put("duration", event.duration)
         doc.put("description", event.description)
+        doc.put("participants", new MongoDBList())
         doc.put("loc", point(event.x, event.y))
+        doc.put("tags", event.tags)
         collection.insert(doc)
+    }
+
+    def addParticipant(id: String, user: User) {
+        val constraint = () => {
+            val nin = new BasicDBObject()
+            val builder = MongoDBList.newBuilder[String] += user.id
+            nin.put("$nin", builder.result())
+            nin
+        }
+        updateParticipant(id, user, "$addToSet", -1, constraint)
+    }
+
+    def removeParticipant(id: String, user: User): Unit = {
+        updateParticipant(id, user, "$pull", 1, () => user.id)
     }
 
     def findEvents(x: Double, y: Double, max: Long): DBCursor = {
@@ -48,5 +71,33 @@ class DBService {
         val mongoClient = MongoClient(uri)
         val db = mongoClient(uri.database.get)
         db.getCollection("events")
+    }
+
+    private def userToObject(user: User): BasicDBObject = {
+        val userDoc = new BasicDBObject()
+        val data: CustomData = user.account.getCustomData
+        userDoc.put("id", user.id)
+        userDoc.put("photo_url", data.get("photo_url"))
+        userDoc.put("age", data.get("age"))
+        userDoc.put("bio", data.get("bio"))
+        return userDoc
+    }
+
+    private def updateParticipant(id: String, user: User, ops: String, inc_val: Int, constraint: () => Object): Unit = {
+        val event = new BasicDBObject()
+        event.put("_id", id.toString)
+        event.put("participants.id", constraint())
+
+        val participants = new BasicDBObject()
+        participants.put("participants", userToObject(user))
+
+        val update = new BasicDBObject()
+        update.put(ops, participants)
+
+        val inc = new BasicDBObject()
+        inc.put("spots", inc_val)
+
+        update.put("$inc", inc)
+        collection.update(event, update)
     }
 }

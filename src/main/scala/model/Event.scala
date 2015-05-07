@@ -1,4 +1,4 @@
 package model
 
-case class Event(user_id: String, headline: String, cost: Float, duration: Int, description: String,
-    x: Double, y: Double)
+case class Event(headline: String, description: String, cost: Float, spots: Int,
+    date_and_time: String, duration: Int, x: Double, y: Double, tags: Array[String])
