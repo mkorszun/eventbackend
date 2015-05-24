@@ -9,6 +9,7 @@ import akka.util.Timeout
 import auth.TokenAuthenticator
 import com.mongodb.DBCursor
 import com.stormpath.sdk.directory.CustomData
+import db.{UserNotPresent, UserAlreadyAdded, EventNotFound}
 import model._
 import service.{GetUserById, GetUserByToken, UserService}
 import spray.http.StatusCodes
@@ -71,14 +72,14 @@ object Main extends App with SimpleRoutingApp {
                             pathEnd {
                                 put {
                                     complete {
-                                        dbService.addParticipant(id, user)
-                                        APIResponse("ok")
+                                        dbService.toJson(dbService.addParticipant(id, user))
+                                        //APIResponse("ok")
                                     }
                                 } ~
                                 delete {
                                     complete {
-                                        dbService.removeParticipant(id, user)
-                                        APIResponse("ok")
+                                        dbService.toJson(dbService.removeParticipant(id, user))
+                                        //APIResponse("ok")
                                     }
                                 }
                             }
@@ -155,7 +156,25 @@ object Main extends App with SimpleRoutingApp {
                     requestUri { uri =>
                         log.warning("Request to {} not found", uri)
                         val error: APIError = new APIError("Object not found")
-                        complete(RequestTimeout, error)
+                        complete(NotFound, error)
+                    }
+                case e: EventNotFound =>
+                    requestUri { uri =>
+                        log.warning("Request to {} not found", uri)
+                        val error: APIError = new APIError("Event not found")
+                        complete(NotFound, error)
+                    }
+                case e: UserAlreadyAdded =>
+                    requestUri { uri =>
+                        log.warning("Request to {} not found", uri)
+                        val error: APIError = new APIError("User already added to this event")
+                        complete(Conflict, error)
+                    }
+                case e: UserNotPresent =>
+                    requestUri { uri =>
+                        log.warning("Request to {} not found", uri)
+                        val error: APIError = new APIError("User not part of this event")
+                        complete(NotFound, error)
                     }
                 case e: Exception =>
                     requestUri { uri =>

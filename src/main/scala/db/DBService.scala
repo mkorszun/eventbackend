@@ -1,8 +1,8 @@
 package db
 
+import com.mongodb._
 import com.mongodb.casbah.commons.MongoDBList
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
-import com.mongodb.{BasicDBObject, DBCollection, DBCursor}
 import com.stormpath.sdk.directory.CustomData
 import model.{Event, User}
 
@@ -28,18 +28,26 @@ class DBService {
         collection.insert(doc)
     }
 
-    def addParticipant(id: String, user: User) {
+    def addParticipant(id: String, user: User): DBObject = {
         val constraint = () => {
             val nin = new BasicDBObject()
             val builder = MongoDBList.newBuilder[String] += user.id
             nin.put("$nin", builder.result())
             nin
         }
-        updateParticipant(id, user, "$addToSet", -1, constraint)
+        val event: DBObject = updateParticipant(id, user, "$addToSet", -1, constraint)
+        if (event != null) {
+            return event
+        }
+        throw new UserAlreadyAdded
     }
 
-    def removeParticipant(id: String, user: User): Unit = {
-        updateParticipant(id, user, "$pull", 1, () => user.id)
+    def removeParticipant(id: String, user: User): DBObject = {
+        val event: DBObject = updateParticipant(id, user, "$pull", 1, () => user.id)
+        if (event != null) {
+            return event
+        }
+        throw new UserNotPresent
     }
 
     def findEvents(x: Double, y: Double, max: Long): DBCursor = {
@@ -57,6 +65,10 @@ class DBService {
 
     def toJson(results: DBCursor): String = {
         return com.mongodb.util.JSON.serialize(results)
+    }
+
+    def toJson(result: DBObject): String = {
+        return com.mongodb.util.JSON.serialize(result)
     }
 
     private def point(x: Double, y: Double): BasicDBObject = {
@@ -83,7 +95,13 @@ class DBService {
         return userDoc
     }
 
-    private def updateParticipant(id: String, user: User, ops: String, inc_val: Int, constraint: () => Object): Unit = {
+    private def updateParticipant(id: String, user: User, ops: String, inc_val: Int,
+        constraint: () => Object): DBObject = {
+
+        if (!isEvent(id)) {
+            throw new EventNotFound
+        }
+
         val event = new BasicDBObject()
         event.put("_id", id.toString)
         event.put("participants.id", constraint())
@@ -98,6 +116,23 @@ class DBService {
         inc.put("spots", inc_val)
 
         update.put("$inc", inc)
-        collection.update(event, update)
+        return collection.findAndModify(event, null, null, false, update, true, false)
+    }
+
+    private def isEvent(id: String): Boolean = {
+        val query = new BasicDBObject()
+        query.put("_id", id)
+        val cursor = collection.find(query).limit(1)
+        if (cursor.size() == 0) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }
+
+class EventNotFound extends Exception
+
+class UserAlreadyAdded extends Exception
+
+class UserNotPresent extends Exception
