@@ -59,10 +59,11 @@ object Main extends App with SimpleRoutingApp {
                                         }
                                 }
                             } ~ get {
-                                parameters('x.as[Double], 'y.as[Double], 'max.as[Long]) {
-                                    (x, y, max) =>
+                                parameters('x.as[Double], 'y.as[Double], 'max.as[Long], 'tags.as[String]?) {
+                                    (x, y, max, t) =>
                                         complete {
-                                            val events: DBCursor = dbService.findEvents(x, y, max)
+                                            val tags: Array[String] = if (t.nonEmpty) t.get.split(",+") else Array.empty[String]
+                                            val events: DBCursor = dbService.findEvents(x, y, max, tags)
                                             dbService.toJson(events)
                                         }
                                 }

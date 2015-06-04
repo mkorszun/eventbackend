@@ -50,7 +50,7 @@ class DBService {
         throw new UserNotPresent
     }
 
-    def findEvents(x: Double, y: Double, max: Long): DBCursor = {
+    def findEvents(x: Double, y: Double, max: Long, tags: Array[String]): DBCursor = {
         val near = new BasicDBObject()
         val loc = new BasicDBObject()
         val query = new BasicDBObject()
@@ -60,6 +60,16 @@ class DBService {
 
         loc.put("$near", near)
         query.put("loc", loc)
+
+        if (tags.length > 0) {
+            val in = new BasicDBObject()
+            val m = new BasicDBObject()
+
+            in.put("$in", tags)
+            m.put("$elemMatch", in)
+            query.put("tags", m)
+        }
+
         return collection.find(query).limit(50)
     }
 
