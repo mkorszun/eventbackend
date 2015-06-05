@@ -73,6 +73,12 @@ class DBService {
         return collection.find(query).limit(50)
     }
 
+    def findUserEvents(id: String): DBCursor = {
+        val query = new BasicDBObject()
+        query.put("user.id", id)
+        return collection.find(query)
+    }
+
     def toJson(results: DBCursor): String = {
         return com.mongodb.util.JSON.serialize(results)
     }
