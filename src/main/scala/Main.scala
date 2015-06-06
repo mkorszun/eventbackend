@@ -85,6 +85,15 @@ object Main extends App with SimpleRoutingApp {
                                 }
                             }
                         } ~
+                        pathPrefix("event" / Segment / "comment" / Segment) { (id, msg) =>
+                            pathEnd {
+                                put {
+                                    complete {
+                                        dbService.toJson(dbService.addComment(id, user, msg))
+                                    }
+                                }
+                            }
+                        } ~
                         path("user") {
                             post {
                                 entity(as[UserData]) {
