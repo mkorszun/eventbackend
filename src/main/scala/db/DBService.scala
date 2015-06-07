@@ -38,7 +38,7 @@ class DBService {
             nin.put("$nin", builder.result())
             nin
         }
-        val event: DBObject = updateParticipant(id, user, "$addToSet", -1, constraint)
+        val event: DBObject = updateParticipant(id, user, "$addToSet", -1, constraint, userToObject(user))
         if (event != null) {
             return event
         }
@@ -46,7 +46,10 @@ class DBService {
     }
 
     def removeParticipant(id: String, user: User): DBObject = {
-        val event: DBObject = updateParticipant(id, user, "$pull", 1, () => user.id)
+        val obj = new BasicDBObject()
+        obj.put("id", user.id)
+
+        val event: DBObject = updateParticipant(id, user, "$pull", 1, () => user.id, obj)
         if (event != null) {
             return event
         }
@@ -123,7 +126,7 @@ class DBService {
     }
 
     private def updateParticipant(id: String, user: User, ops: String, inc_val: Int,
-        constraint: () => Object): DBObject = {
+        constraint: () => Object, obj: BasicDBObject): DBObject = {
 
         if (!isEvent(id)) {
             throw new EventNotFound
@@ -134,7 +137,7 @@ class DBService {
         event.put("participants.id", constraint())
 
         val participants = new BasicDBObject()
-        participants.put("participants", userToObject(user))
+        participants.put("participants", obj)
 
         val update = new BasicDBObject()
         update.put(ops, participants)
