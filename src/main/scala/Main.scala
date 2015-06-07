@@ -12,6 +12,7 @@ import com.stormpath.sdk.directory.CustomData
 import db.{UserNotPresent, UserAlreadyAdded, EventNotFound}
 import model._
 import service.{GetUserById, GetUserByToken, UserService}
+import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
 import spray.routing.{AuthenticationFailedRejection, _}
@@ -98,14 +99,18 @@ object Main extends App with SimpleRoutingApp {
                             post {
                                 entity(as[UserData]) {
                                     userData =>
-                                        complete{
-                                            val customData: CustomData = user.account.getCustomData
-                                            customData.put("photo_url", userData.photo_url)
-                                            customData.put("age", userData.age.toString)
-                                            customData.put("bio", userData.bio.toString)
-                                            customData.put("tags", userData.tags)
-                                            user.account.save()
-                                            APIResponse("ok")
+                                        respondWithHeader(RawHeader("Location", user.id)) {
+                                            complete {
+                                                val customData: CustomData = user.account.getCustomData
+                                                customData.put("photo_url", userData.photo_url)
+                                                customData.put("age", userData.age.toString)
+                                                customData.put("bio", userData.bio.toString)
+                                                customData.put("tags", userData.tags)
+                                                customData.put("first_name", userData.firstName)
+                                                customData.put("last_name", userData.lastName)
+                                                user.account.save()
+                                                APIResponse("OK")
+                                            }
                                         }
                                 }
                             }
@@ -120,7 +125,9 @@ object Main extends App with SimpleRoutingApp {
                                             val age: Int = customData.get("age").toString.toInt
                                             val bio: String = customData.get("bio").toString
                                             val tags: util.ArrayList[String] = customData.get("tags").asInstanceOf[util.ArrayList[String]]
-                                            UserData(photo_url, age, bio, tags.toArray(new Array[String](tags.size())))}
+                                            val firstName : String = customData.get("first_name").toString
+                                            val lastName : String = customData.get("last_name").toString
+                                            UserData(photo_url, age, bio, tags.toArray(new Array[String](tags.size())), firstName, lastName)}
                                         )
                                     }
                                 }
