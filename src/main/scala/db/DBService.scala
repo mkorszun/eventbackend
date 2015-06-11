@@ -5,30 +5,14 @@ import java.util.Date
 import com.mongodb._
 import com.mongodb.casbah.commons.MongoDBList
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
-import com.stormpath.sdk.directory.CustomData
 import model.{Event, User}
 
 class DBService {
 
     val collection = getCollection()
 
-    def uuid = java.util.UUID.randomUUID.toString
-
     def saveEvent(user: User, event: Event) {
-        val doc = new BasicDBObject()
-        doc.put("_id", uuid)
-        doc.put("user", userToObject(user))
-        doc.put("spots", event.spots)
-        doc.put("date_and_time", event.date_and_time)
-        doc.put("headline", event.headline)
-        doc.put("cost", event.cost)
-        doc.put("duration", event.duration)
-        doc.put("description", event.description)
-        doc.put("participants", new MongoDBList())
-        doc.put("comments", new MongoDBList())
-        doc.put("loc", point(event.x, event.y))
-        doc.put("tags", event.tags)
-        collection.insert(doc)
+        collection.insert(new DBEvent(user, event))
     }
 
     def addParticipant(id: String, user: User): DBObject = {
@@ -38,7 +22,8 @@ class DBService {
             nin.put("$nin", builder.result())
             nin
         }
-        val event: DBObject = updateParticipant(id, user, "$addToSet", -1, constraint, userToObject(user))
+        val event: DBObject = updateParticipant(id, user, "$addToSet", -1, constraint,
+            new DBUser(user))
         if (event != null) {
             return event
         }
@@ -69,7 +54,7 @@ class DBService {
         val loc = new BasicDBObject()
         val query = new BasicDBObject()
 
-        near.put("$geometry", point(x, y))
+        near.put("$geometry", new DBGeoPoint(x, y))
         near.put("$maxDistance", max)
 
         loc.put("$near", near)
@@ -101,28 +86,11 @@ class DBService {
         return com.mongodb.util.JSON.serialize(result)
     }
 
-    private def point(x: Double, y: Double): BasicDBObject = {
-        val point = new BasicDBObject()
-        point.put("type", "Point")
-        point.put("coordinates", Array(x, y))
-        return point
-    }
-
     private def getCollection(): DBCollection = {
         val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
         val mongoClient = MongoClient(uri)
         val db = mongoClient(uri.database.get)
         db.getCollection("events")
-    }
-
-    private def userToObject(user: User): BasicDBObject = {
-        val userDoc = new BasicDBObject()
-        val data: CustomData = user.account.getCustomData
-        userDoc.put("id", user.id)
-        userDoc.put("photo_url", data.get("photo_url"))
-        userDoc.put("age", data.get("age"))
-        userDoc.put("bio", data.get("bio"))
-        return userDoc
     }
 
     private def updateParticipant(id: String, user: User, ops: String, inc_val: Int,
