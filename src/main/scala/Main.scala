@@ -135,7 +135,7 @@ object Main extends App with SimpleRoutingApp {
                             path("events") {
                                 get {
                                     complete {
-                                        dbService.toJson(dbService.findUserEvents(id))
+                                        dbService.toJson(dbService.findEvents(id))
                                     }
                                 }
                             }
