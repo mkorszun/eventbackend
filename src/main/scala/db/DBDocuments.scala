@@ -23,6 +23,7 @@ class DBEvent(user: User, event: Event) extends BasicDBObject {
 class DBUser(user: User) extends BasicDBObject {
     val data: CustomData = user.account.getCustomData
     put("id", user.id)
+    put("full_name", user.account.getFullName)
     put("photo_url", data.get("photo_url"))
     put("age", data.get("age"))
     put("bio", data.get("bio"))
