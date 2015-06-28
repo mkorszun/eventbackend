@@ -27,11 +27,11 @@ object UserRoute extends UserRoute with SimpleRoutingApp {
 
     def route(user: User): Route = {
         path("user") {
-            updateUser(user)
+            updateUser(user) ~ readUserByToken()
         } ~ pathPrefix("user" / Segment) {
             id =>
                 pathEnd {
-                    readUser(id)
+                    readUserById(id)
                 } ~ path("events") {
                     listUserEvents(id)
                 }
@@ -48,7 +48,21 @@ object UserRoute extends UserRoute with SimpleRoutingApp {
         }
     }
 
-    def readUser(id: String): Route = {
+    def readUserByToken(): Route = {
+        import format.UserDataJsonFormat._
+        import spray.httpx.SprayJsonSupport._
+        get {
+            parameters('token.as[String]) { token =>
+                complete {
+                    (userService ? GetUserByToken(token)).mapTo[Option[User]].map(result => {
+                        toJson(result)
+                    })
+                }
+            }
+        }
+    }
+
+    def readUserById(id: String): Route = {
         import format.UserDataJsonFormat._
         import spray.httpx.SprayJsonSupport._
         get {
