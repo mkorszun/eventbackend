@@ -19,6 +19,11 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
         path("event") {
             createEvent(user) ~ listEvents
         } ~
+            pathPrefix("event" / Segment) { id =>
+                pathEnd {
+                    updateEvent(id, user)
+                }
+            } ~
             pathPrefix("event" / Segment / "user") { id =>
                 pathEnd {
                     addParticipant(user, id) ~ removeParticipant(user, id)
@@ -84,6 +89,21 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
                     complete {
                         toJson {
                             eventService.saveEvent(user, event)
+                        }
+                    }
+            }
+        }
+    }
+
+    def updateEvent(event_id: String, user: User): routing.Route = {
+        import format.EventJsonFormat._
+        import spray.httpx.SprayJsonSupport._
+        put {
+            entity(as[Event]) {
+                event =>
+                    complete {
+                        toJson {
+                            eventService.updateEvent(event_id, user, event)
                         }
                     }
             }

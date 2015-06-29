@@ -4,7 +4,7 @@ import java.util.Date
 
 import com.mongodb._
 import com.mongodb.casbah.Imports._
-import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
+import com.mongodb.casbah.commons.{Imports, MongoDBList, MongoDBObject}
 import com.mongodb.casbah.query.dsl.GeoCoords
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import com.stormpath.sdk.directory.CustomData
@@ -62,10 +62,30 @@ class EventService {
         throw new UserNotPresent
     }
 
+    def updateEvent(event_id: String, user: User, event: Event): DBObject = {
+        if (!isEvent(event_id, user)) throw new EventNotFound
+
+        val update = $set(
+            "headline" -> event.headline,
+            "description" -> event.description,
+            "date_and_time" -> event.date_and_time,
+            "duration" -> event.duration,
+            "loc" -> new DBGeoPoint(event.x, event.y),
+            "tags" -> event.tags
+        )
+
+        return collection.findAndModify(MongoDBObject("_id" -> event_id), null, null, false, update, true, false)
+    }
+
     // Helpers =======================================================================================================//
 
     private def isEvent(id: String): Boolean = {
         return if (collection.find(MongoDBObject("_id" -> id)).limit(1).size() == 0) false else true
+    }
+
+    private def isEvent(id: String, user: User): Boolean = {
+        val query: Imports.DBObject = MongoDBObject("_id" -> id, "user.id" -> user.id)
+        return if (collection.find(query).limit(1).size() == 0) false else true
     }
 
     private def getCollection(): DBCollection = {
