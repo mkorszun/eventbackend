@@ -21,7 +21,7 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
         } ~
             pathPrefix("event" / Segment) { id =>
                 pathEnd {
-                    updateEvent(id, user)
+                    updateEvent(id, user) ~ deleteEvent(id, user)
                 }
             } ~
             pathPrefix("event" / Segment / "user") { id =>
@@ -106,6 +106,18 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
                             eventService.updateEvent(event_id, user, event)
                         }
                     }
+            }
+        }
+    }
+
+    def deleteEvent(event_id: String, user: User): routing.Route = {
+        import format.APIResponseFormat._
+        import spray.httpx.SprayJsonSupport._
+        delete {
+            complete {
+                toJson {
+                    eventService.deleteEvent(event_id, user)
+                }
             }
         }
     }
