@@ -6,6 +6,7 @@ import _root_.directives.JsonUserDirective
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
+import com.wordnik.swagger.annotations.{Api, ApiOperation}
 import model._
 import service._
 import spray.http.HttpHeaders.RawHeader
@@ -13,17 +14,16 @@ import spray.routing._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class UserRoute() {
+object UserRoute extends UserRoute
+
+@Api(value = "/user", description = "Operations about user.", produces = "application/json", position = 1)
+class UserRoute extends SimpleRoutingApp {
+
     implicit val timeout = Timeout(20, TimeUnit.SECONDS)
     implicit val eventService = new EventService()
     implicit val system = ActorSystem("my-system")
     implicit val userService = system.actorOf(Props[UserService], "user-service")
-
     object toJson extends JsonUserDirective
-
-}
-
-object UserRoute extends UserRoute with SimpleRoutingApp {
 
     def route(user: User): Route = {
         path("user") {
@@ -38,6 +38,7 @@ object UserRoute extends UserRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "GET", value = "List user events")
     def listUserEvents(id: String): Route = {
         get {
             complete {
@@ -48,6 +49,7 @@ object UserRoute extends UserRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "GET", value = "Get user by token")
     def readUserByToken(): Route = {
         import format.UserDataJsonFormat._
         import spray.httpx.SprayJsonSupport._
@@ -62,6 +64,7 @@ object UserRoute extends UserRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "GET", value = "Get user by id")
     def readUserById(id: String): Route = {
         import format.UserDataJsonFormat._
         import spray.httpx.SprayJsonSupport._
@@ -74,6 +77,7 @@ object UserRoute extends UserRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "PUT", value = "Update user")
     def updateUser(user: User): Route = {
         import format.APIResponseFormat._
         import format.UserDataJsonFormat._

@@ -1,19 +1,19 @@
 package routes
 
 import _root_.directives.JsonEventDirective
+import com.wordnik.swagger.annotations.{Api, ApiImplicitParam, ApiImplicitParams, ApiOperation}
 import model.{Event, User}
 import service.EventService
 import spray.routing
 import spray.routing._
 
-case class EventRoute() {
+object EventRoute extends EventRoute
+
+@Api(value = "/event", description = "Operations about events.", produces = "application/json", position = 1)
+class EventRoute extends SimpleRoutingApp {
+
     implicit val eventService = new EventService()
-
     object toJson extends JsonEventDirective
-
-}
-
-object EventRoute extends EventRoute with SimpleRoutingApp {
 
     def route(user: User): Route = {
         path("event") {
@@ -36,6 +36,7 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
             }
     }
 
+    @ApiOperation(httpMethod = "PUT", value = "Adds comment")
     def addComment(user: User, id: String, msg: String): Route = {
         put {
             complete {
@@ -46,6 +47,7 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "DELETE", value = "Remove participant")
     def removeParticipant(user: User, id: String): Route = {
         delete {
             complete {
@@ -56,6 +58,7 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "PUT", value = "Add participant")
     def addParticipant(user: User, id: String): Route = {
         put {
             complete {
@@ -66,6 +69,7 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "GET", value = "List events")
     def listEvents: Route = {
         get {
             parameters('x.as[Double], 'y.as[Double], 'max.as[Long], 'tags.as[String] ?) {
@@ -79,6 +83,7 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "POST", value = "Create event")
     def createEvent(user: User): routing.Route = {
         import format.APIResponseFormat._
         import format.EventJsonFormat._
@@ -95,6 +100,7 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "PUT", value = "Update event")
     def updateEvent(event_id: String, user: User): routing.Route = {
         import format.EventJsonFormat._
         import spray.httpx.SprayJsonSupport._
@@ -110,6 +116,7 @@ object EventRoute extends EventRoute with SimpleRoutingApp {
         }
     }
 
+    @ApiOperation(httpMethod = "DELETE", value = "Delete event")
     def deleteEvent(event_id: String, user: User): routing.Route = {
         import format.APIResponseFormat._
         import spray.httpx.SprayJsonSupport._

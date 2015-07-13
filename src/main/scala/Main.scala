@@ -5,6 +5,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import auth.TokenAuthenticator
+import doc.Documentation
 import model._
 import routes.{EventRoute, UserRoute}
 import service._
@@ -32,7 +33,7 @@ object Main extends App with SimpleRoutingApp {
             get {
                 complete("OK")
             }
-        } ~
+        } ~ Documentation.docRoutes() ~
             handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                 handleExceptions(MyExceptionHandler.myExceptionHandler) {
                     authenticate(authenticator) { user =>

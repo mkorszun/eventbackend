@@ -33,6 +33,8 @@ libraryDependencies += "com.stormpath.sdk" % "stormpath-sdk-httpclient" % "1.0.R
 
 libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.4"
 
+libraryDependencies += "com.gettyimages" %% "spray-swagger" % "0.5.1"
+
 scalacOptions ++= Seq(
   "-unchecked",
   "-deprecation",
