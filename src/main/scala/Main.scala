@@ -1,6 +1,7 @@
 import java.util._
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
+import _root_.directives.com.agilogy.spray.cors.CORSSupport
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
@@ -16,7 +17,7 @@ import spray.util.LoggingContext
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object Main extends App with SimpleRoutingApp {
+object Main extends App with SimpleRoutingApp with CORSSupport {
 
     implicit val system = ActorSystem("my-system")
     implicit val eventService = new EventService()
@@ -28,19 +29,20 @@ object Main extends App with SimpleRoutingApp {
     }
 
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
-
-        path("") {
-            get {
-                complete("OK")
-            }
-        } ~ Documentation.docRoutes() ~
-            handleRejections(MyRejectionHandler.jsonRejectionHandler) {
-                handleExceptions(MyExceptionHandler.myExceptionHandler) {
-                    authenticate(authenticator) { user =>
-                        EventRoute.route(user) ~ UserRoute.route(user)
+        cors {
+            path("") {
+                get {
+                    complete("OK")
+                }
+            } ~ Documentation.docRoutes() ~
+                handleRejections(MyRejectionHandler.jsonRejectionHandler) {
+                    handleExceptions(MyExceptionHandler.myExceptionHandler) {
+                        authenticate(authenticator) { user =>
+                            EventRoute.route(user) ~ UserRoute.route(user)
+                        }
                     }
                 }
-            }
+        }
     }
 
     object MyRejectionHandler {
