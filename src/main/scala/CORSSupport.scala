@@ -1,10 +1,6 @@
-package directives
-
-package com.agilogy.spray.cors
-
-import spray.http.{HttpMethods, HttpMethod, HttpResponse, AllOrigins}
 import spray.http.HttpHeaders._
 import spray.http.HttpMethods._
+import spray.http.{AllOrigins, HttpMethod, HttpMethods, HttpResponse}
 import spray.routing._
 
 // see also https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS

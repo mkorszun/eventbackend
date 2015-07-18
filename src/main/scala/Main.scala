@@ -1,7 +1,5 @@
 import java.util._
 import java.util.concurrent.{TimeUnit, TimeoutException}
-
-import _root_.directives.com.agilogy.spray.cors.CORSSupport
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout

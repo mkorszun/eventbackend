@@ -120,6 +120,8 @@ class EventService {
         put("comments", new MongoDBList())
         put("loc", new DBGeoPoint(event.x, event.y))
         put("tags", event.tags)
+        put("distance", event.distance)
+        put("pace", event.pace)
     }
 
     private class DBUser(user: User) extends BasicDBObject {
