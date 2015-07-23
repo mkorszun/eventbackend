@@ -32,6 +32,8 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                 get {
                     complete("OK")
                 }
+            } ~ path("documentation") {
+                redirect(System.getenv("DOC_URL"), MovedPermanently)
             } ~ Documentation.docRoutes() ~
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                     handleExceptions(MyExceptionHandler.myExceptionHandler) {
