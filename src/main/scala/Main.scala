@@ -10,7 +10,7 @@ import routes.{EventRoute, UserRoute}
 import service._
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
-import spray.routing.{AuthenticationFailedRejection, _}
+import spray.routing._
 import spray.util.LoggingContext
 
 import scala.concurrent.ExecutionContext.Implicits.global
