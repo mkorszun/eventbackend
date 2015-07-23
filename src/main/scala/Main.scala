@@ -52,13 +52,13 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
 
         implicit val jsonRejectionHandler = RejectionHandler {
             case AuthenticationFailedRejection(msg, cause) :: Nil =>
-                complete(StatusCodes.Unauthorized, APIError("Authentication failure"))
+                complete((StatusCodes.Unauthorized, APIError("Authentication failure")))
             case MissingQueryParamRejection(name) :: Nil =>
-                complete(StatusCodes.BadRequest, APIError("Parameter missing: " + name))
+                complete((StatusCodes.BadRequest, APIError("Parameter missing: " + name)))
             case MalformedRequestContentRejection(message, cause) :: Nil =>
-                complete(StatusCodes.BadRequest, APIError(message))
+                complete((StatusCodes.BadRequest, APIError(message)))
             case _ :: Nil =>
-                complete(StatusCodes.BadRequest, APIError("Failed to process request"))
+                complete((StatusCodes.BadRequest, APIError("Failed to process request")))
         }
     }
 
@@ -74,37 +74,37 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                     requestUri { uri =>
                         log.warning("Request to {} exceeded max time", uri)
                         val error: APIError = new APIError("Request timeout")
-                        complete(RequestTimeout, error)
+                        complete((RequestTimeout, error))
                     }
                 case e: NoSuchElementException =>
                     requestUri { uri =>
                         log.warning("Request to {} not found", uri)
                         val error: APIError = new APIError("Object not found")
-                        complete(NotFound, error)
+                        complete((NotFound, error))
                     }
                 case e: EventNotFound =>
                     requestUri { uri =>
                         log.warning("Request to {} not found", uri)
                         val error: APIError = new APIError("Event not found")
-                        complete(NotFound, error)
+                        complete((NotFound, error))
                     }
                 case e: UserAlreadyAdded =>
                     requestUri { uri =>
                         log.warning("Request to {} not found", uri)
                         val error: APIError = new APIError("User already added to this event")
-                        complete(Conflict, error)
+                        complete((Conflict, error))
                     }
                 case e: UserNotPresent =>
                     requestUri { uri =>
                         log.warning("Request to {} not found", uri)
                         val error: APIError = new APIError("User not part of this event")
-                        complete(NotFound, error)
+                        complete((NotFound, error))
                     }
                 case e: Exception =>
                     requestUri { uri =>
                         log.error(e, "Request to {} could not be handled normally", uri)
                         val error: APIError = new APIError("Internal server error")
-                        complete(InternalServerError, error)
+                        complete((InternalServerError, error))
                     }
             }
     }
