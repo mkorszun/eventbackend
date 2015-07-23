@@ -1,4 +1,4 @@
-package service
+package service.storage
 
 import java.util.Date
 
@@ -10,7 +10,7 @@ import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import com.stormpath.sdk.directory.CustomData
 import model.{Event, User}
 
-class EventService {
+class EventStorageService {
 
     val collection = getCollection()
 

@@ -1,13 +1,15 @@
 import java.util._
 import java.util.concurrent.{TimeUnit, TimeoutException}
+
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import auth.TokenAuthenticator
 import doc.Documentation
 import model._
-import routes.{EventRoute, UserRoute}
 import service._
+import service.http.{EventHTTPService, UserHTTPService}
+import service.storage.{EventNotFound, EventStorageService, UserAlreadyAdded, UserNotPresent}
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
 import spray.routing._
@@ -18,12 +20,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Main extends App with SimpleRoutingApp with CORSSupport {
 
     implicit val system = ActorSystem("my-system")
-    implicit val eventService = new EventService()
+    implicit val eventService = new EventStorageService()
     implicit val userService = system.actorOf(Props[UserService], "user-service")
     implicit val timeout = Timeout(20, TimeUnit.SECONDS)
 
     val authenticator = TokenAuthenticator[User](headerName = "token", queryStringParameterName = "token") { key =>
         (userService ? GetUserByToken(key)).mapTo[Option[User]].map(result => result)
+    }
+
+    val events_service = new EventHTTPService {
+        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+    }
+
+    val user_service = new UserHTTPService {
+        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
     }
 
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
@@ -38,7 +48,7 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                     handleExceptions(MyExceptionHandler.myExceptionHandler) {
                         authenticate(authenticator) { user =>
-                            EventRoute.route(user) ~ UserRoute.route(user)
+                            events_service.routes(user) ~ user_service.routes(user)
                         }
                     }
                 }
@@ -108,4 +118,5 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                     }
             }
     }
+
 }

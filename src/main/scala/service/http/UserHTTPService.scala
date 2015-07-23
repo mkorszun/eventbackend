@@ -1,4 +1,4 @@
-package routes
+package service.http
 
 import java.util.concurrent.TimeUnit
 import javax.ws.rs.Path
@@ -10,23 +10,22 @@ import akka.util.Timeout
 import com.wordnik.swagger.annotations._
 import model._
 import service._
+import service.storage.EventStorageService
 import spray.http.HttpHeaders.RawHeader
 import spray.routing._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object UserRoute extends UserRoute
-
 @Api(value = "/user", description = "Operations about user.", produces = "application/json", position = 1)
-class UserRoute extends SimpleRoutingApp {
+trait UserHTTPService extends HttpService {
 
     implicit val timeout = Timeout(20, TimeUnit.SECONDS)
-    implicit val eventService = new EventService()
+    implicit val eventService = new EventStorageService()
     implicit val system = ActorSystem("my-system")
     implicit val userService = system.actorOf(Props[UserService], "user-service")
     object toJson extends JsonUserDirective
 
-    def route(user: User): Route = {
+    def routes(user: User): Route = {
         path("user") {
             updateUser(user) ~ readUserByToken()
         } ~ pathPrefix("user" / Segment) {

@@ -1,24 +1,22 @@
-package routes
+package service.http
 
 import javax.ws.rs.Path
 
 import _root_.directives.JsonEventDirective
 import com.wordnik.swagger.annotations._
 import model.{Event, User}
-import service.EventService
+import service.storage.EventStorageService
 import spray.routing
 import spray.routing._
 
-object EventRoute extends EventRoute
-
 @Api(value = "/event", description = "Operations about events.", produces = "application/json", position = 1)
-class EventRoute extends SimpleRoutingApp {
+trait EventHTTPService extends HttpService {
 
-    implicit val eventService = new EventService()
+    implicit val eventService = new EventStorageService()
 
     object toJson extends JsonEventDirective
 
-    def route(user: User): Route = {
+    def routes(user: User): Route = {
         path("event") {
             createEvent(user) ~ listEvents
         } ~

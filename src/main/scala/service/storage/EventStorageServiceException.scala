@@ -1,4 +1,4 @@
-package service
+package service.storage
 
 class EventServiceException() extends Exception
 
