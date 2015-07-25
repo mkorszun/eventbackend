@@ -1,37 +1,27 @@
 package service.http
 
-import java.util.concurrent.TimeUnit
 import javax.ws.rs.Path
 
 import _root_.directives.JsonUserDirective
-import akka.actor._
-import akka.pattern.ask
-import akka.util.Timeout
 import com.wordnik.swagger.annotations._
-import model._
-import service._
-import service.storage.EventStorageService
-import spray.http.HttpHeaders.RawHeader
+import model.event.Event
+import model.user.{PublicUser, User}
+import service.storage.events.EventStorageService
+import service.storage.users.UserStorageService
 import spray.routing._
-
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @Api(value = "/user", description = "Operations about user.", produces = "application/json", position = 1)
 trait UserHTTPService extends HttpService {
 
-    implicit val timeout = Timeout(20, TimeUnit.SECONDS)
     implicit val eventService = new EventStorageService()
-    implicit val system = ActorSystem("my-system")
-    implicit val userService = system.actorOf(Props[UserService], "user-service")
+
     object toJson extends JsonUserDirective
 
     def routes(user: User): Route = {
-        path("user") {
-            updateUser(user) ~ readUserByToken()
-        } ~ pathPrefix("user" / Segment) {
+        pathPrefix("user" / Segment) {
             id =>
                 pathEnd {
-                    readUserById(id)
+                    readUser(id) ~ updateUser(id, user.token)
                 } ~ path("events") {
                     listUserEvents(id)
                 }
@@ -39,10 +29,24 @@ trait UserHTTPService extends HttpService {
     }
 
     @Path("/{user_id}/events")
-    @ApiOperation(httpMethod = "GET", value = "List user events", response = classOf[Event], responseContainer = "List")
+    @ApiOperation(
+        httpMethod = "GET",
+        value = "List user events",
+        response = classOf[Event],
+        responseContainer = "List")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "user_id", value = "User id", required = true, dataType = "string", paramType = "path")
+        new ApiImplicitParam(
+            name = "token",
+            value = "User token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "user_id",
+            value = "User id",
+            required = true,
+            dataType = "string",
+            paramType = "path")
     ))
     def listUserEvents(id: String): Route = {
         get {
@@ -54,60 +58,67 @@ trait UserHTTPService extends HttpService {
         }
     }
 
-    @ApiOperation(httpMethod = "GET", value = "Get user by token", response = classOf[UserData])
+    @Path("{user_id}")
+    @ApiOperation(
+        httpMethod = "GET",
+        value = "Read user",
+        response = classOf[PublicUser])
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query")
+        new ApiImplicitParam(
+            name = "user_id",
+            value = "User id",
+            required = true,
+            dataType = "string",
+            paramType = "path"),
+        new ApiImplicitParam(
+            name = "token",
+            value = "User token",
+            required = true,
+            dataType = "string",
+            paramType = "query")
     ))
-    def readUserByToken(): Route = {
-        import format.UserDataJsonFormat._
-        import spray.httpx.SprayJsonSupport._
-        get {
-            parameters('token.as[String]) { token =>
-                complete {
-                    (userService ? GetUserByToken(token)).mapTo[Option[User]].map(result => {
-                        toJson(result)
-                    })
-                }
-            }
-        }
-    }
-
-    @Path("/{user_id}")
-    @ApiOperation(httpMethod = "GET", value = "Get user by id", response = classOf[UserData])
-    @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "user_id", value = "User id", required = true, dataType = "string", paramType = "path")
-    ))
-    def readUserById(id: String): Route = {
-        import format.UserDataJsonFormat._
-        import spray.httpx.SprayJsonSupport._
+    def readUser(id: String): Route = {
         get {
             complete {
-                (userService ? GetUserById(id)).mapTo[Option[User]].map(result => {
-                    toJson(result)
-                })
+                import format.PublicUserJsonProtocol._
+                import spray.httpx.SprayJsonSupport._
+                UserStorageService.readPublicUserData(id)
             }
         }
     }
 
-    @ApiOperation(httpMethod = "POST", value = "Update user")
+    @Path("{user_id}")
+    @ApiOperation(
+        httpMethod = "PUT",
+        value = "Update user")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "user", value = "User data", required = true, dataType = "UserData", paramType = "body")
+        new ApiImplicitParam(
+            name = "user_id",
+            value = "User id",
+            required = true,
+            dataType = "string",
+            paramType = "path"),
+        new ApiImplicitParam(
+            name = "token",
+            value = "User token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "user",
+            value = "User data",
+            required = true,
+            dataType = "PublicUser",
+            paramType = "body")
     ))
-    def updateUser(user: User): Route = {
-        import format.APIResponseFormat._
-        import format.UserDataJsonFormat._
+    def updateUser(id: String, token: String): Route = {
+        import format.PublicUserJsonProtocol._
         import spray.httpx.SprayJsonSupport._
-        post {
-            entity(as[UserData]) {
+        put {
+            entity(as[PublicUser]) {
                 userData =>
-                    respondWithHeader(RawHeader("Location", user.id)) {
-                        complete {
-                            (userService ? UpdateUserData(user, userData)).mapTo[Option[User]].map(result => {
-                                APIResponse("OK")
-                            })
-                        }
+                    complete {
+                        UserStorageService.updateUser(id, token, userData)
                     }
             }
         }

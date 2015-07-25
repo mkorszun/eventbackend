@@ -4,8 +4,9 @@ import javax.ws.rs.Path
 
 import _root_.directives.JsonEventDirective
 import com.wordnik.swagger.annotations._
-import model.{Event, User}
-import service.storage.EventStorageService
+import model.event.Event
+import model.user.User
+import service.storage.events.EventStorageService
 import spray.routing
 import spray.routing._
 
@@ -110,7 +111,7 @@ trait EventHTTPService extends HttpService {
     @ApiOperation(httpMethod = "POST", value = "Create event")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "event", value = "New event", required = true, dataType = "model.Event", paramType = "body")
+        new ApiImplicitParam(name = "event", value = "New event", required = true, dataType = "model.event.Event", paramType = "body")
     ))
     def createEvent(user: User): routing.Route = {
         import format.APIResponseFormat._
@@ -133,7 +134,7 @@ trait EventHTTPService extends HttpService {
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "event_id", value = "Event id", required = true, dataType = "string", paramType = "path"),
-        new ApiImplicitParam(name = "event", value = "Updated event", required = true, dataType = "model.Event", paramType = "body")
+        new ApiImplicitParam(name = "event", value = "Updated event", required = true, dataType = "model.event.Event", paramType = "body")
     ))
     def updateEvent(event_id: String, user: User): routing.Route = {
         import format.EventJsonFormat._

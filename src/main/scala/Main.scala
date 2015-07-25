@@ -1,31 +1,32 @@
 import java.util._
-import java.util.concurrent.{TimeUnit, TimeoutException}
+import java.util.concurrent.TimeoutException
 
 import akka.actor._
-import akka.pattern.ask
-import akka.util.Timeout
 import auth.TokenAuthenticator
 import doc.Documentation
 import model._
-import service._
-import service.http.{EventHTTPService, UserHTTPService}
-import service.storage.{EventNotFound, EventStorageService, UserAlreadyAdded, UserNotPresent}
+import model.user.User
+import service.http.{EventHTTPService, TokenHTTPService, UserHTTPService}
+import service.storage.events.{EventNotFound, UserAlreadyAdded, UserNotPresent}
+import service.storage.users.UserStorageService
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
 import spray.routing._
 import spray.util.LoggingContext
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object Main extends App with SimpleRoutingApp with CORSSupport {
 
     implicit val system = ActorSystem("my-system")
-    implicit val eventService = new EventStorageService()
-    implicit val userService = system.actorOf(Props[UserService], "user-service")
-    implicit val timeout = Timeout(20, TimeUnit.SECONDS)
 
-    val authenticator = TokenAuthenticator[User](headerName = "token", queryStringParameterName = "token") { key =>
-        (userService ? GetUserByToken(key)).mapTo[Option[User]].map(result => result)
+    val authenticator1 = TokenAuthenticator[User](
+        headerName = "token",
+        queryStringParameterName = "token") { key =>
+        Future {
+            UserStorageService.readPrivateUserData(key)
+        }
     }
 
     val events_service = new EventHTTPService {
@@ -36,18 +37,22 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
         override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
     }
 
+    val token_service = new TokenHTTPService {
+        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+    }
+
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
         cors {
             path("") {
                 get {
                     complete("OK")
                 }
-            } ~ path("documentation") {
+            } ~ token_service.routes() ~ path("documentation") {
                 redirect(System.getenv("DOC_URL"), MovedPermanently)
             } ~ Documentation.docRoutes() ~
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                     handleExceptions(MyExceptionHandler.myExceptionHandler) {
-                        authenticate(authenticator) { user =>
+                        authenticate(authenticator1) { user =>
                             events_service.routes(user) ~ user_service.routes(user)
                         }
                     }
