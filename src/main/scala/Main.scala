@@ -1,6 +1,7 @@
 import java.util._
 import java.util.concurrent.TimeoutException
 
+import _root_.directives.UnauthorizedException
 import akka.actor._
 import auth.TokenAuthenticator
 import doc.Documentation
@@ -90,6 +91,12 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                         log.warning("Request to {} exceeded max time", uri)
                         val error: APIError = new APIError("Request timeout")
                         complete((RequestTimeout, error))
+                    }
+                case e: UnauthorizedException =>
+                    requestUri { uri =>
+                        log.warning("Request to {} not authorized", uri)
+                        val error: APIError = new APIError("Not authorized")
+                        complete((Unauthorized, error))
                     }
                 case e: NoSuchElementException =>
                     requestUri { uri =>

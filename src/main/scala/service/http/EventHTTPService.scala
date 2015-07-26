@@ -10,7 +10,7 @@ import service.storage.events.EventStorageService
 import spray.routing
 import spray.routing._
 
-@Api(value = "/event", description = "Operations about events.", produces = "application/json", position = 1)
+@Api(value = "/event", description = "Event actions", produces = "application/json", position = 1)
 trait EventHTTPService extends HttpService {
 
     implicit val eventService = new EventStorageService()
@@ -28,7 +28,7 @@ trait EventHTTPService extends HttpService {
             } ~
             pathPrefix("event" / Segment / "user") { id =>
                 pathEnd {
-                    addParticipant(user, id) ~ removeParticipant(user, id)
+                    joinEvent(user, id) ~ leaveEvent(user, id)
                 }
             } ~
             pathPrefix("event" / Segment / "comment" / Segment) { (id, msg) =>
@@ -39,11 +39,28 @@ trait EventHTTPService extends HttpService {
     }
 
     @Path("/{event_id}/comment/{msg}")
-    @ApiOperation(httpMethod = "PUT", value = "Add comment to the event")
+    @ApiOperation(
+        httpMethod = "PUT",
+        value = "Comment event")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "event_id", value = "Event id", required = true, dataType = "string", paramType = "path"),
-        new ApiImplicitParam(name = "msg", value = "Message", required = true, dataType = "string", paramType = "path")
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "event_id",
+            value = "Event to comment",
+            required = true,
+            dataType = "string",
+            paramType = "path"),
+        new ApiImplicitParam(
+            name = "msg",
+            value = "Message",
+            required = true,
+            dataType = "string",
+            paramType = "path")
     ))
     def addComment(user: User, id: String, msg: String): Route = {
         put {
@@ -56,12 +73,24 @@ trait EventHTTPService extends HttpService {
     }
 
     @Path("/{event_id}/user")
-    @ApiOperation(httpMethod = "DELETE", value = "Remove self from the event")
+    @ApiOperation(
+        httpMethod = "DELETE",
+        value = "Leave event")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "event_id", value = "Event id", required = true, dataType = "string", paramType = "path")
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "event_id",
+            value = "Event to leave",
+            required = true,
+            dataType = "string",
+            paramType = "path")
     ))
-    def removeParticipant(user: User, id: String): Route = {
+    def leaveEvent(user: User, id: String): Route = {
         delete {
             complete {
                 toJson {
@@ -72,12 +101,24 @@ trait EventHTTPService extends HttpService {
     }
 
     @Path("/{event_id}/user")
-    @ApiOperation(httpMethod = "PUT", value = "Add self to the event")
+    @ApiOperation(
+        httpMethod = "PUT",
+        value = "Join event")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "event_id", value = "Event id", required = true, dataType = "string", paramType = "path")
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "event_id",
+            value = "Event to join",
+            required = true,
+            dataType = "string",
+            paramType = "path")
     ))
-    def addParticipant(user: User, id: String): Route = {
+    def joinEvent(user: User, id: String): Route = {
         put {
             complete {
                 toJson {
@@ -87,13 +128,40 @@ trait EventHTTPService extends HttpService {
         }
     }
 
-    @ApiOperation(httpMethod = "GET", value = "List events")
+    @ApiOperation(
+        httpMethod = "GET",
+        value = "List events")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "x", value = "Latitude", required = true, dataType = "double", paramType = "query"),
-        new ApiImplicitParam(name = "y", value = "Longitude", required = true, dataType = "double", paramType = "query"),
-        new ApiImplicitParam(name = "max", value = "Max radius [m]", required = true, dataType = "integer", paramType = "query"),
-        new ApiImplicitParam(name = "tags", value = "Comma separated tags", required = false, dataType = "string", paramType = "query")
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "x",
+            value = "Latitude",
+            required = true,
+            dataType = "double",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "y",
+            value = "Longitude",
+            required = true,
+            dataType = "double",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "max",
+            value = "Max radius [m]",
+            required = true,
+            dataType = "integer",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "tags",
+            value = "Comma separated tags",
+            required = false,
+            dataType = "string",
+            paramType = "query")
     ))
     def listEvents: Route = {
         get {
@@ -108,10 +176,22 @@ trait EventHTTPService extends HttpService {
         }
     }
 
-    @ApiOperation(httpMethod = "POST", value = "Create event")
+    @ApiOperation(
+        httpMethod = "POST",
+        value = "Create event")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "event", value = "New event", required = true, dataType = "model.event.Event", paramType = "body")
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "event",
+            value = "Event to create",
+            required = true,
+            dataType = "model.event.Event",
+            paramType = "body")
     ))
     def createEvent(user: User): routing.Route = {
         import format.APIResponseFormat._
@@ -130,11 +210,28 @@ trait EventHTTPService extends HttpService {
     }
 
     @Path("/{event_id}")
-    @ApiOperation(httpMethod = "PUT", value = "Update event")
+    @ApiOperation(
+        httpMethod = "PUT",
+        value = "Update event")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "event_id", value = "Event id", required = true, dataType = "string", paramType = "path"),
-        new ApiImplicitParam(name = "event", value = "Updated event", required = true, dataType = "model.event.Event", paramType = "body")
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "event_id",
+            value = "Event to update",
+            required = true,
+            dataType = "string",
+            paramType = "path"),
+        new ApiImplicitParam(
+            name = "event",
+            value = "Updated event",
+            required = true,
+            dataType = "model.event.Event",
+            paramType = "body")
     ))
     def updateEvent(event_id: String, user: User): routing.Route = {
         import format.EventJsonFormat._
@@ -152,10 +249,22 @@ trait EventHTTPService extends HttpService {
     }
 
     @Path("/{event_id}")
-    @ApiOperation(httpMethod = "DELETE", value = "Delete event")
+    @ApiOperation(
+        httpMethod = "DELETE",
+        value = "Delete event")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "token", value = "User token", required = true, dataType = "string", paramType = "query"),
-        new ApiImplicitParam(name = "event_id", value = "Event id", required = true, dataType = "string", paramType = "path")
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "event_id",
+            value = "Event to delete",
+            required = true,
+            dataType = "string",
+            paramType = "path")
     ))
     def deleteEvent(event_id: String, user: User): routing.Route = {
         import format.APIResponseFormat._
