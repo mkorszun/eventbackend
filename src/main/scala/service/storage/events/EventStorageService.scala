@@ -36,7 +36,7 @@ class EventStorageService {
         if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
         val participant = MongoDBObject("participants" -> MongoDBObject("id" -> user.id))
-        val update = MongoDBObject("$pull" -> participant, "$inc" -> MongoDBObject("spots" -> 1))
+        val update = MongoDBObject("$pull" -> participant)
         val doc = collection.findAndModify(event, null, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserNotPresent
@@ -47,7 +47,7 @@ class EventStorageService {
         val constraint = MongoDBObject("$nin" -> (MongoDBList.newBuilder[String] += user.id).result())
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> constraint)
         val participant = MongoDBObject("participants" -> UserStorageService.userToPublicDocument(user))
-        val update = MongoDBObject("$addToSet" -> participant, "$inc" -> MongoDBObject("spots" -> -1))
+        val update = MongoDBObject("$addToSet" -> participant)
         val doc = collection.findAndModify(event, null, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserAlreadyAdded
@@ -70,9 +70,10 @@ class EventStorageService {
             "headline" -> event.headline,
             "description" -> event.description,
             "date_and_time" -> event.date_and_time,
-            "duration" -> event.duration,
             "loc" -> new DBGeoPoint(event.x, event.y),
-            "tags" -> event.tags
+            "tags" -> event.tags,
+            "distance" -> event.distance,
+            "pace" -> event.pace
         )
 
         return collection.findAndModify(MongoDBObject("_id" -> event_id), null, null, false, update, true, false)
@@ -111,11 +112,8 @@ class EventStorageService {
     private class DBEvent(user: User, event: Event) extends BasicDBObject {
         put("_id", java.util.UUID.randomUUID.toString)
         put("user", UserStorageService.userToPublicDocument(user))
-        put("spots", event.spots)
         put("date_and_time", event.date_and_time)
         put("headline", event.headline)
-        put("cost", event.cost)
-        put("duration", event.duration)
         put("description", event.description)
         put("participants", new MongoDBList())
         put("comments", new MongoDBList())
