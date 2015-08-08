@@ -56,8 +56,7 @@ class EventStorageService {
     def addComment(event_id: String, user: User, msg: String): DBObject = {
         if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
-        val comment = MongoDBObject("user_id" -> user.id, "msg" -> msg, "date" -> new Date().getTime)
-        val update = MongoDBObject("$push" -> MongoDBObject("comments" -> comment))
+        val update = MongoDBObject("$push" -> MongoDBObject("comments" -> new DBEventComment(user, msg)))
         val doc = collection.findAndModify(event, null, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserNotPresent
@@ -121,6 +120,13 @@ class EventStorageService {
         put("tags", event.tags)
         put("distance", event.distance)
         put("pace", event.pace)
+    }
+
+    private class DBEventComment(user: User, msg: String) extends BasicDBObject {
+        put("msg", msg)
+        put("date", new Date().getTime)
+        put("user_id", user.id)
+        put("photo_url", user.photo_url)
     }
 
     //================================================================================================================//
