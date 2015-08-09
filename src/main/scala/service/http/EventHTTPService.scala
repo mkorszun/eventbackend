@@ -7,6 +7,8 @@ import com.wordnik.swagger.annotations._
 import model.event.Event
 import model.user.User
 import service.storage.events.EventStorageService
+import spray.http.CacheDirectives.`max-age`
+import spray.http.HttpHeaders.`Cache-Control`
 import spray.routing
 import spray.routing._
 
@@ -167,9 +169,11 @@ trait EventHTTPService extends HttpService {
         get {
             parameters('x.as[Double], 'y.as[Double], 'max.as[Long], 'tags.as[String] ?) {
                 (x, y, max, t) =>
-                    complete {
-                        toJson {
-                            eventService.findEvents(x, y, max, tags(t))
+                    respondWithHeader(`Cache-Control`(`max-age`(500))) {
+                        complete {
+                            toJson {
+                                eventService.findEvents(x, y, max, tags(t))
+                            }
                         }
                     }
             }

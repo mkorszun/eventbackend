@@ -8,6 +8,8 @@ import model.event.Event
 import model.user.{PublicUser, User}
 import service.storage.events.EventStorageService
 import service.storage.users.UserStorageService
+import spray.http.CacheDirectives.`max-age`
+import spray.http.HttpHeaders.`Cache-Control`
 import spray.routing._
 
 @Api(value = "/user", description = "User actions", produces = "application/json", position = 1)
@@ -50,9 +52,11 @@ trait UserHTTPService extends HttpService with UserPermissions {
     ))
     def listUserEvents(id: String): Route = {
         get {
-            complete {
-                toJson {
-                    eventService.findEvents(id)
+            respondWithHeader(`Cache-Control`(`max-age`(500))) {
+                complete {
+                    toJson {
+                        eventService.findEvents(id)
+                    }
                 }
             }
         }
