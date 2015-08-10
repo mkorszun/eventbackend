@@ -68,7 +68,7 @@ class EventStorageService {
         val update = $set(
             "headline" -> event.headline,
             "description" -> event.description,
-            "date_and_time" -> event.date_and_time,
+            "timestamp" -> event.timestamp,
             "loc" -> new DBGeoPoint(event.x, event.y),
             "tags" -> event.tags,
             "distance" -> event.distance,
@@ -111,7 +111,7 @@ class EventStorageService {
     private class DBEvent(user: User, event: Event) extends BasicDBObject {
         put("_id", java.util.UUID.randomUUID.toString)
         put("user", UserStorageService.userToPublicDocument(user))
-        put("date_and_time", event.date_and_time)
+        put("timestamp", event.timestamp)
         put("headline", event.headline)
         put("description", event.description)
         put("participants", new MongoDBList())
