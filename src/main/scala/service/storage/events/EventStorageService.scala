@@ -1,6 +1,6 @@
 package service.storage.events
 
-import java.util.Date
+import java.util.{Calendar, Date}
 
 import com.mongodb._
 import com.mongodb.casbah.Imports._
@@ -27,7 +27,8 @@ class EventStorageService {
 
     def findEvents(x: Double, y: Double, max: Long, tags: Array[String]): DBCursor = {
         val geo = MongoDBObject("$geometry" -> new DBGeoPoint(x, y), "$maxDistance" -> max)
-        val query = MongoDBObject("loc" -> MongoDBObject("$near" -> geo))
+        val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
+        val query = MongoDBObject("loc" -> MongoDBObject("$near" -> geo), "timestamp" -> timestamp)
         if (tags.length > 0) query.put("tags", MongoDBObject("$elemMatch" -> MongoDBObject("$in" -> tags)))
         return collection.find(query).limit(50)
     }
