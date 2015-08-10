@@ -4,7 +4,7 @@ import java.util.{Calendar, Date}
 
 import com.mongodb._
 import com.mongodb.casbah.Imports._
-import com.mongodb.casbah.commons.{Imports, MongoDBList, MongoDBObject}
+import com.mongodb.casbah.commons.{Imports, MongoDBList, MongoDBListBuilder, MongoDBObject}
 import com.mongodb.casbah.query.dsl.GeoCoords
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import model.event.Event
@@ -95,6 +95,12 @@ class EventStorageService {
         return if (collection.find(query).limit(1).size() == 0) false else true
     }
 
+    private def initialParticipants(user: User): MongoDBList = {
+        val builder: MongoDBListBuilder = MongoDBList.newBuilder[DBObject]
+        builder += UserStorageService.userToPublicDocument(user)
+        return builder.result()
+    }
+
     private def getCollection(): DBCollection = {
         val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
         val mongoClient = MongoClient(uri)
@@ -115,7 +121,7 @@ class EventStorageService {
         put("timestamp", event.timestamp)
         put("headline", event.headline)
         put("description", event.description)
-        put("participants", new MongoDBList())
+        put("participants", initialParticipants(user))
         put("comments", new MongoDBList())
         put("loc", new DBGeoPoint(event.x, event.y))
         put("tags", event.tags)
