@@ -96,6 +96,7 @@ object UserStorageService {
 
     def publicUserFromDocument(doc: DBObject): PublicUser = {
         PublicUser(
+            Option(doc.get("_id").toString),
             doc.get("first_name").toString,
             doc.get("last_name").toString,
             doc.get("photo_url").toString,

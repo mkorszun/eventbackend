@@ -6,7 +6,7 @@ import com.mongodb._
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBList, MongoDBListBuilder, MongoDBObject}
 import com.mongodb.casbah.query.dsl.GeoCoords
-import com.mongodb.casbah.{MongoClient, MongoClientURI}
+import com.mongodb.casbah.{MongoClient, MongoClientURI, query}
 import model.event.Event
 import model.user.User
 import service.storage.users.UserStorageService
@@ -22,7 +22,7 @@ class EventStorageService {
     }
 
     def findEvents(user_id: String): DBCursor = {
-        return collection.find(MongoDBObject("user.id" -> user_id))
+        return collection.find($or("user.id" -> user_id, "participants.id" -> user_id))
     }
 
     def findEvents(x: Double, y: Double, max: Long, tags: Array[String]): DBCursor = {
