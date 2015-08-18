@@ -6,7 +6,7 @@ import com.mongodb._
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBList, MongoDBListBuilder, MongoDBObject}
 import com.mongodb.casbah.query.dsl.GeoCoords
-import com.mongodb.casbah.{MongoClient, MongoClientURI, query}
+import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import model.event.Event
 import model.user.User
 import service.storage.users.UserStorageService
