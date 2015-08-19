@@ -19,9 +19,15 @@ trait EventHTTPService extends HttpService {
 
     object toJson extends JsonEventDirective
 
+    def public_routes(): Route = {
+        path("event") {
+            listEvents
+        }
+    }
+
     def routes(user: User): Route = {
         path("event") {
-            createEvent(user) ~ listEvents
+            createEvent(user)
         } ~
             pathPrefix("event" / Segment) { id =>
                 pathEnd {
@@ -134,12 +140,6 @@ trait EventHTTPService extends HttpService {
         httpMethod = "GET",
         value = "List events")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(
-            name = "token",
-            value = "User auth token",
-            required = true,
-            dataType = "string",
-            paramType = "query"),
         new ApiImplicitParam(
             name = "x",
             value = "Latitude",

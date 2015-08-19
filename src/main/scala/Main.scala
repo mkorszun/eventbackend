@@ -48,7 +48,7 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                 get {
                     complete("OK")
                 }
-            } ~ token_service.routes() ~ path("documentation") {
+            } ~ events_service.public_routes() ~ token_service.routes() ~ path("documentation") {
                 redirect(System.getenv("DOC_URL"), MovedPermanently)
             } ~ Documentation.docRoutes() ~
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
