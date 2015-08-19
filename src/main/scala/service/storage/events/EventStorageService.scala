@@ -133,6 +133,7 @@ class EventStorageService {
         put("msg", msg)
         put("date", new Date().getTime)
         put("user_id", user.id)
+        put("user_name", user.first_name + " " + user.last_name)
         put("photo_url", user.photo_url)
     }
 
