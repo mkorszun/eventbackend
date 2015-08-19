@@ -39,14 +39,14 @@ trait EventHTTPService extends HttpService {
                     joinEvent(user, id) ~ leaveEvent(user, id)
                 }
             } ~
-            pathPrefix("event" / Segment / "comment" / Segment) { (id, msg) =>
+            pathPrefix("event" / Segment / "comment") { id =>
                 pathEnd {
-                    addComment(user, id, msg)
+                    addComment(user, id)
                 }
             }
     }
 
-    @Path("/{event_id}/comment/{msg}")
+    @Path("/{event_id}/comment")
     @ApiOperation(
         httpMethod = "PUT",
         value = "Comment event")
@@ -68,14 +68,17 @@ trait EventHTTPService extends HttpService {
             value = "Message",
             required = true,
             dataType = "string",
-            paramType = "path")
+            paramType = "query")
     ))
-    def addComment(user: User, id: String, msg: String): Route = {
+    def addComment(user: User, id: String): Route = {
         put {
-            complete {
-                toJson {
-                    eventService.addComment(id, user, msg)
-                }
+            parameters('msg.as[String]) {
+                msg =>
+                    complete {
+                        toJson {
+                            eventService.addComment(id, user, msg)
+                        }
+                    }
             }
         }
     }
