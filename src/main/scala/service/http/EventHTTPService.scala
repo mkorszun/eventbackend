@@ -4,6 +4,7 @@ import javax.ws.rs.Path
 
 import _root_.directives.JsonEventDirective
 import com.wordnik.swagger.annotations._
+import config.Config
 import model.event.Event
 import model.user.User
 import service.storage.events.EventStorageService
@@ -13,7 +14,7 @@ import spray.routing
 import spray.routing._
 
 @Api(value = "/event", description = "Event actions", produces = "application/json", position = 1)
-trait EventHTTPService extends HttpService {
+trait EventHTTPService extends HttpService with Config {
 
     implicit val eventService = new EventStorageService()
 
@@ -172,7 +173,7 @@ trait EventHTTPService extends HttpService {
         get {
             parameters('x.as[Double], 'y.as[Double], 'max.as[Long], 'tags.as[String] ?) {
                 (x, y, max, t) =>
-                    respondWithHeader(`Cache-Control`(`max-age`(500))) {
+                    respondWithHeader(`Cache-Control`(`max-age`(MAX_AGE_SEARCH))) {
                         complete {
                             toJson {
                                 eventService.findEvents(x, y, max, tags(t))

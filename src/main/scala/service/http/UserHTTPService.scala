@@ -4,6 +4,7 @@ import javax.ws.rs.Path
 
 import _root_.directives.{JsonUserDirective, UserPermissions}
 import com.wordnik.swagger.annotations._
+import config.Config
 import model.event.Event
 import model.user.{PublicUser, User}
 import service.storage.events.EventStorageService
@@ -13,7 +14,7 @@ import spray.http.HttpHeaders.`Cache-Control`
 import spray.routing._
 
 @Api(value = "/user", description = "User actions", produces = "application/json", position = 1)
-trait UserHTTPService extends HttpService with UserPermissions {
+trait UserHTTPService extends HttpService with UserPermissions with Config {
 
     implicit val eventService = new EventStorageService()
 
@@ -52,7 +53,7 @@ trait UserHTTPService extends HttpService with UserPermissions {
     ))
     def listUserEvents(id: String): Route = {
         get {
-            respondWithHeader(`Cache-Control`(`max-age`(500))) {
+            respondWithHeader(`Cache-Control`(`max-age`(MAX_AGE_USER_EVENTS))) {
                 complete {
                     toJson {
                         eventService.findEvents(id)
