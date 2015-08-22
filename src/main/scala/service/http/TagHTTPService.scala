@@ -48,7 +48,7 @@ trait TagHTTPService extends HttpService with Config {
         import spray.json.DefaultJsonProtocol._
         import spray.json._
         get {
-            parameters('x.as[Double], 'y.as[Double], 'max.as[Long]) {
+            parameters('x.as[Double]?, 'y.as[Double]?, 'max.as[Long]?) {
                 (x, y, max) =>
                     respondWithHeader(`Cache-Control`(`max-age`(MAX_AGE_TAGS))) {
                         complete {

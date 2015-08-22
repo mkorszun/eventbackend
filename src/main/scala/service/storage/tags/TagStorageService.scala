@@ -15,11 +15,15 @@ object TagStorageService {
 
     // Public API ====================================================================================================//
 
-    def findTags(x: Double, y: Double, max: Long): Array[String] = {
-        val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
+    def findTags(x: Option[Double], y: Option[Double], max: Option[Long]): Array[String] = {
+
         val steps: java.util.List[mongodb.DBObject] = new java.util.ArrayList[mongodb.DBObject]()
 
-        steps.add(MongoDBObject("$geoNear" -> new DBGeoNear(x, y, max, timestamp)))
+        if (x.isDefined && y.isDefined && max.isDefined) {
+            val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
+            steps.add(MongoDBObject("$geoNear" -> new DBGeoNear(x.get, y.get, max.get, timestamp)))
+        }
+
         steps.add(MongoDBObject("$unwind" -> "$tags"))
         steps.add(MongoDBObject("$group" -> new Group()))
 
