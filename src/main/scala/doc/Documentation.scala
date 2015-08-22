@@ -2,7 +2,7 @@ package doc
 
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
-import service.http.{TokenHTTPService, EventHTTPService, UserHTTPService}
+import service.http.{EventHTTPService, TagHTTPService, TokenHTTPService, UserHTTPService}
 import spray.routing.Route
 
 import scala.reflect.runtime.universe._
@@ -13,7 +13,8 @@ class Documentation() {
     def docRoutes(): Route = {
         new SwaggerHttpService {
 
-            override def apiTypes = Seq(typeOf[EventHTTPService], typeOf[UserHTTPService], typeOf[TokenHTTPService])
+            override def apiTypes = Seq(typeOf[EventHTTPService], typeOf[UserHTTPService], typeOf[TokenHTTPService],
+                typeOf[TagHTTPService])
 
             override def apiVersion = "2.0"
 
