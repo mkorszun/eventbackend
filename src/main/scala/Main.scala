@@ -7,7 +7,7 @@ import auth.TokenAuthenticator
 import doc.Documentation
 import model._
 import model.user.User
-import service.http.{EventHTTPService, TokenHTTPService, UserHTTPService}
+import service.http.{EventHTTPService, TagHTTPService, TokenHTTPService, UserHTTPService}
 import service.storage.events.{EventNotFound, UserAlreadyAdded, UserNotPresent}
 import service.storage.users.UserStorageService
 import spray.http.StatusCodes
@@ -42,15 +42,24 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
         override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
     }
 
+    val tag_service = new TagHTTPService {
+        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+    }
+
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
         cors {
             path("") {
                 get {
                     complete("OK")
                 }
-            } ~ events_service.public_routes() ~ token_service.routes() ~ path("documentation") {
-                redirect(System.getenv("DOC_URL"), MovedPermanently)
-            } ~ Documentation.docRoutes() ~
+            } ~
+                events_service.public_routes() ~
+                tag_service.public_routes() ~
+                token_service.routes() ~
+                path("documentation") {
+                    redirect(System.getenv("DOC_URL"), MovedPermanently)
+                } ~
+                Documentation.docRoutes() ~
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                     handleExceptions(MyExceptionHandler.myExceptionHandler) {
                         authenticate(authenticator1) { user =>
