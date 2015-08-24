@@ -9,4 +9,6 @@ case class User(
     last_name: String,
     photo_url: String,
     bio: String,
-    tags: Array[String])
+    telephone: Option[String],
+    www: Option[String],
+    email: Option[String])

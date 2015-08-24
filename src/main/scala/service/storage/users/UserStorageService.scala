@@ -26,7 +26,9 @@ object UserStorageService {
             "first_name" -> user.first_name,
             "last_name" -> user.last_name,
             "bio" -> user.bio,
-            "tags" -> user.tags
+            "telephone" -> user.telephone,
+            "www" -> user.www,
+            "email" -> user.email
         )
 
         val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
@@ -65,7 +67,9 @@ object UserStorageService {
             "last_name" -> user.last_name,
             "photo_url" -> user.photo_url,
             "bio" -> user.bio,
-            "tags" -> user.tags
+            "telephone" -> user.telephone,
+            "www" -> user.www,
+            "email" -> user.email
         )
     }
 
@@ -76,7 +80,16 @@ object UserStorageService {
             "last_name" -> user.last_name,
             "photo_url" -> user.photo_url,
             "bio" -> user.bio,
-            "tags" -> user.tags
+            "telephone" -> user.telephone,
+            "www" -> user.www,
+            "email" -> user.email
+        )
+    }
+
+    def userToParticipantDocument(user: User): DBObject = {
+        MongoDBObject(
+            "id" -> user.id,
+            "photo_url" -> user.photo_url
         )
     }
 
@@ -90,7 +103,9 @@ object UserStorageService {
             doc.get("last_name").toString,
             doc.get("photo_url").toString,
             doc.get("bio").toString,
-            (doc.get("tags").asInstanceOf[BasicDBList].toList map (_.toString)).toArray
+            Option(doc.get("telephone").asInstanceOf[String]),
+            Option(doc.get("www").asInstanceOf[String]),
+            Option(doc.get("email").asInstanceOf[String])
         )
     }
 
@@ -101,7 +116,9 @@ object UserStorageService {
             doc.get("last_name").toString,
             doc.get("photo_url").toString,
             doc.get("bio").toString,
-            (doc.get("tags").asInstanceOf[BasicDBList].toList map (_.toString)).toArray
+            Option(doc.get("telephone").asInstanceOf[String]),
+            Option(doc.get("www").asInstanceOf[String]),
+            Option(doc.get("email").asInstanceOf[String])
         )
     }
 

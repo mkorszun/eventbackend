@@ -49,8 +49,7 @@ object FacebookProvider {
                 Future {
                     val newUser: User = User(
                         java.util.UUID.randomUUID.toString, id, "facebook", java.util.UUID.randomUUID.toString,
-                        first_name,
-                        last_name, photo_link(id), "", Array())
+                        first_name, last_name, photo_link(id), "",  None, None, None)
                     Option(UserStorageService.createUser(newUser))
                 }
             case _ =>
