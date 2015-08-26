@@ -7,6 +7,7 @@ import service.storage.users.UserStorageService
 import spray.client.pipelining._
 import spray.http._
 import spray.httpx.SprayJsonSupport._
+import spray.httpx.UnsuccessfulResponseException
 import spray.httpx.marshalling.ToResponseMarshallable
 import spray.json.DefaultJsonProtocol
 
@@ -49,13 +50,18 @@ object FacebookProvider {
                 Future {
                     val newUser: User = User(
                         java.util.UUID.randomUUID.toString, id, "facebook", java.util.UUID.randomUUID.toString,
-                        first_name, last_name, photo_link(id), "",  None, None, None)
+                        first_name, last_name, photo_link(id), "", None, None, None)
                     Option(UserStorageService.createUser(newUser))
                 }
             case _ =>
                 Future {
                     None
                 }
+        }.recover {
+            case e: UnsuccessfulResponseException =>
+                throw new InvalidTokenException
+            case e: Exception =>
+                throw e
         }
 
         resp
@@ -64,4 +70,7 @@ object FacebookProvider {
     def photo_link(user_id: String): String = {
         return f"https://graph.facebook.com/$user_id%s/picture?height=400&width=400"
     }
+
+    class InvalidTokenException extends Exception
+
 }

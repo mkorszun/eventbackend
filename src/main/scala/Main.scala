@@ -52,10 +52,10 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                 get {
                     complete("OK")
                 }
-            } ~
+            } ~ handleExceptions(MyExceptionHandler.myExceptionHandler) {
                 events_service.public_routes() ~
                 tag_service.public_routes() ~
-                token_service.routes() ~
+                token_service.routes()} ~
                 path("documentation") {
                     redirect(System.getenv("DOC_URL"), MovedPermanently)
                 } ~
