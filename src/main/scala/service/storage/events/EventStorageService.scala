@@ -58,7 +58,7 @@ class EventStorageService {
         if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
         val update = MongoDBObject("$push" -> MongoDBObject("comments" -> new DBEventComment(user, msg)))
-        val doc = collection.findAndModify(event, null, null, false, update, true, false)
+        val doc = collection.findAndModify(event,  MongoDBObject("comments" -> 1, "_id" -> 0), null, false, update, true, false)
         if (doc != null) return doc
         throw new UserNotPresent
     }
