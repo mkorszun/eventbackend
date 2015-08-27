@@ -1,16 +1,15 @@
-package doc
+package service.http
 
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
-import service.http.{EventHTTPService, TagHTTPService, TokenHTTPService, UserHTTPService}
-import spray.routing.Route
+import config.Config
+import spray.http.StatusCodes._
+import spray.routing.{HttpService, Route}
 
 import scala.reflect.runtime.universe._
 
-object Documentation extends Documentation
-
-class Documentation() {
-    def docRoutes(): Route = {
+trait DocHTTPService extends HttpService with Config {
+    def routes(): Route = {
         new SwaggerHttpService {
 
             override def apiTypes = Seq(typeOf[EventHTTPService], typeOf[UserHTTPService], typeOf[TokenHTTPService],
@@ -28,7 +27,9 @@ class Documentation() {
                 "Biegajmy event backend",
                 "", "", "", "Apache V2",
                 "http://www.apache.org/licenses/LICENSE-2.0"))
-        }.routes
+        }.routes ~ path("documentation") {
+            redirect(DOCUMENTATION_URL, MovedPermanently)
+        }
     }
 }
 

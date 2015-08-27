@@ -4,10 +4,10 @@ import java.util.concurrent.TimeoutException
 import _root_.directives.UnauthorizedException
 import akka.actor._
 import auth.TokenAuthenticator
-import doc.Documentation
+import auth.providers.FacebookProvider.InvalidTokenException
 import model._
 import model.user.User
-import service.http.{EventHTTPService, TagHTTPService, TokenHTTPService, UserHTTPService}
+import service.http._
 import service.storage.events.{EventNotFound, UserAlreadyAdded, UserNotPresent}
 import service.storage.users.UserStorageService
 import spray.http.StatusCodes
@@ -46,27 +46,30 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
         override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
     }
 
+    val doc_service = new DocHTTPService {
+        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+    }
+
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
         cors {
             path("") {
                 get {
                     complete("OK")
                 }
-            } ~ handleExceptions(MyExceptionHandler.myExceptionHandler) {
-                events_service.public_routes() ~
-                tag_service.public_routes() ~
-                token_service.routes()} ~
-                path("documentation") {
-                    redirect(System.getenv("DOC_URL"), MovedPermanently)
-                } ~
-                Documentation.docRoutes() ~
+            } ~ doc_service.routes() ~
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                     handleExceptions(MyExceptionHandler.myExceptionHandler) {
-                        authenticate(authenticator1) { user =>
-                            events_service.routes(user) ~ user_service.routes(user)
-                        }
+                        events_service.public_routes() ~
+                            tag_service.public_routes() ~
+                            token_service.routes()
+                    }
+                } ~ handleRejections(MyRejectionHandler.jsonRejectionHandler) {
+                handleExceptions(MyExceptionHandler.myExceptionHandler) {
+                    authenticate(authenticator1) { user =>
+                        events_service.routes(user) ~ user_service.routes(user)
                     }
                 }
+            }
         }
     }
 
@@ -76,13 +79,17 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
         import spray.httpx.SprayJsonSupport._
 
         implicit val jsonRejectionHandler = RejectionHandler {
-            case AuthenticationFailedRejection(msg, cause) :: Nil =>
+            case AuthenticationFailedRejection(msg, cause) :: _ =>
                 complete((StatusCodes.Unauthorized, APIError("Authentication failure")))
-            case MissingQueryParamRejection(name) :: Nil =>
+            case MissingQueryParamRejection(name) :: _ =>
                 complete((StatusCodes.BadRequest, APIError("Parameter missing: " + name)))
-            case MalformedRequestContentRejection(message, cause) :: Nil =>
+            case MissingFormFieldRejection(name) :: _ =>
+                complete((StatusCodes.BadRequest, APIError("Parameter missing: " + name)))
+            case MalformedRequestContentRejection(message, cause) :: _ =>
                 complete((StatusCodes.BadRequest, APIError(message)))
-            case _ :: Nil =>
+            case MalformedQueryParamRejection(name, error, cause) :: _ =>
+                complete((StatusCodes.BadRequest, APIError(error)))
+            case _ :: _ =>
                 complete((StatusCodes.BadRequest, APIError("Failed to process request")))
         }
     }
@@ -130,6 +137,12 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                         log.warning("Request to {} not found", uri)
                         val error: APIError = new APIError("User not part of this event")
                         complete((NotFound, error))
+                    }
+                case e: InvalidTokenException =>
+                    requestUri { uri =>
+                        log.error(e, "Request to {} could not be handled normally", uri)
+                        val error: APIError = new APIError("Invalid token")
+                        complete((Unauthorized, error))
                     }
                 case e: Exception =>
                     requestUri { uri =>
