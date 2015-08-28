@@ -112,7 +112,7 @@ class EventStorageService {
 
     private class DBGeoPoint(x: Double, y: Double) extends MongoDBObject {
         put("type", "Point")
-        put("coordinates", GeoCoords(x, y))
+        put("coordinates", GeoCoords(y, x))
     }
 
     private class DBEvent(user: User, event: Event) extends BasicDBObject {

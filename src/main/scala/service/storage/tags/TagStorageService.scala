@@ -57,7 +57,7 @@ object TagStorageService {
 
     private class DBGeoPoint(x: Double, y: Double) extends BasicDBObject {
         put("type", "Point")
-        put("coordinates", GeoCoords(x, y))
+        put("coordinates", GeoCoords(y, x))
     }
 
     private class DBGeoNear(x: Double, y: Double, max: Long, timestamp: MongoDBObject) extends BasicDBObject {

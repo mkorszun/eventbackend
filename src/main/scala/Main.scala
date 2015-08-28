@@ -59,17 +59,21 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
             } ~ doc_service.routes() ~
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                     handleExceptions(MyExceptionHandler.myExceptionHandler) {
-                        events_service.public_routes() ~
-                            tag_service.public_routes() ~
+                        tag_service.public_routes() ~
                             token_service.routes()
                     }
-                } ~ handleRejections(MyRejectionHandler.jsonRejectionHandler) {
-                handleExceptions(MyExceptionHandler.myExceptionHandler) {
-                    authenticate(authenticator1) { user =>
-                        events_service.routes(user) ~ user_service.routes(user)
+                } ~
+                handleRejections(MyRejectionHandler.jsonRejectionHandler) {
+                    handleExceptions(MyExceptionHandler.myExceptionHandler) {
+                        path("event") {
+                            authenticate(authenticator1) { user =>
+                                events_service.createEvent(user)
+                            } ~ events_service.listEvents
+                        } ~ authenticate(authenticator1) { user =>
+                            user_service.routes(user)
+                        }
                     }
                 }
-            }
         }
     }
 

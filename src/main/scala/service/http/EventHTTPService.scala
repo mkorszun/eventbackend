@@ -20,21 +20,12 @@ trait EventHTTPService extends HttpService with Config {
 
     object toJson extends JsonEventDirective
 
-    def public_routes(): Route = {
-        path("event") {
-            listEvents
-        }
-    }
-
     def routes(user: User): Route = {
-        path("event") {
-            createEvent(user)
+        pathPrefix("event" / Segment) { id =>
+            pathEnd {
+                updateEvent(id, user) ~ deleteEvent(id, user)
+            }
         } ~
-            pathPrefix("event" / Segment) { id =>
-                pathEnd {
-                    updateEvent(id, user) ~ deleteEvent(id, user)
-                }
-            } ~
             pathPrefix("event" / Segment / "user") { id =>
                 pathEnd {
                     joinEvent(user, id) ~ leaveEvent(user, id)
