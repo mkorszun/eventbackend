@@ -70,7 +70,7 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                                 events_service.createEvent(user)
                             } ~ events_service.listEvents
                         } ~ authenticate(authenticator1) { user =>
-                            user_service.routes(user)
+                            events_service.routes(user) ~ user_service.routes(user)
                         }
                     }
                 }
