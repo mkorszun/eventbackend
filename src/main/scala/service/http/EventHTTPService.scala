@@ -18,24 +18,36 @@ trait EventHTTPService extends HttpService with Config {
 
     implicit val eventService = new EventStorageService()
 
+    implicit def authenticator: spray.routing.directives.AuthMagnet[User]
+
     object toJson extends JsonEventDirective
 
-    def routes(user: User): Route = {
-        pathPrefix("event" / Segment) { id =>
+    def routes(): Route = {
+        path("event") {
             pathEnd {
-                updateEvent(id, user) ~ deleteEvent(id, user)
+                authenticate(authenticator) {
+                    user => createEvent(user)
+                } ~ listEvents
             }
-        } ~
-            pathPrefix("event" / Segment / "user") { id =>
+        } ~ pathPrefix("event" / Segment) { id =>
+            pathEnd {
+                authenticate(authenticator) { user =>
+                    updateEvent(id, user) ~ deleteEvent(id, user)
+                } ~ getEvent(id)
+            } ~ pathPrefix("user") {
                 pathEnd {
-                    joinEvent(user, id) ~ leaveEvent(user, id)
+                    authenticate(authenticator) { user =>
+                        joinEvent(user, id) ~ leaveEvent(user, id)
+                    }
                 }
-            } ~
-            pathPrefix("event" / Segment / "comment") { id =>
+            } ~ pathPrefix("comment") {
                 pathEnd {
-                    addComment(user, id)
+                    authenticate(authenticator) {
+                        user => addComment(user, id)
+                    }
                 }
             }
+        }
     }
 
     @Path("/{event_id}/comment")
@@ -272,6 +284,28 @@ trait EventHTTPService extends HttpService with Config {
             complete {
                 toJson {
                     eventService.deleteEvent(event_id, user)
+                }
+            }
+        }
+    }
+
+    @Path("/{event_id}")
+    @ApiOperation(
+        httpMethod = "GET",
+        value = "Get event")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "event_id",
+            value = "Event to read",
+            required = true,
+            dataType = "string",
+            paramType = "path")
+    ))
+    def getEvent(event_id: String): routing.Route = {
+        get {
+            complete {
+                toJson {
+                    eventService.getEvent(event_id)
                 }
             }
         }

@@ -13,6 +13,7 @@ import service.storage.users.UserStorageService
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
 import spray.routing._
+import spray.routing.directives.AuthMagnet
 import spray.util.LoggingContext
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -31,23 +32,27 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
     }
 
     val events_service = new EventHTTPService {
-        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+        override implicit def actorRefFactory: ActorRefFactory = system
+
+        override implicit def authenticator: AuthMagnet[User] = authenticator1
     }
 
     val user_service = new UserHTTPService {
-        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+        override implicit def actorRefFactory: ActorRefFactory = system
+
+        override implicit def authenticator: AuthMagnet[User] = authenticator1
     }
 
     val token_service = new TokenHTTPService {
-        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+        override implicit def actorRefFactory: ActorRefFactory = system
     }
 
     val tag_service = new TagHTTPService {
-        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+        override implicit def actorRefFactory: ActorRefFactory = system
     }
 
     val doc_service = new DocHTTPService {
-        override implicit def actorRefFactory: ActorRefFactory = actorRefFactory
+        override implicit def actorRefFactory: ActorRefFactory = system
     }
 
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
@@ -60,18 +65,9 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                     handleExceptions(MyExceptionHandler.myExceptionHandler) {
                         tag_service.public_routes() ~
-                            token_service.routes()
-                    }
-                } ~
-                handleRejections(MyRejectionHandler.jsonRejectionHandler) {
-                    handleExceptions(MyExceptionHandler.myExceptionHandler) {
-                        path("event") {
-                            authenticate(authenticator1) { user =>
-                                events_service.createEvent(user)
-                            } ~ events_service.listEvents
-                        } ~ authenticate(authenticator1) { user =>
-                            events_service.routes(user) ~ user_service.routes(user)
-                        }
+                            token_service.routes() ~
+                            events_service.routes() ~
+                            user_service.routes()
                     }
                 }
         }
@@ -93,6 +89,8 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                 complete((StatusCodes.BadRequest, APIError(message)))
             case MalformedQueryParamRejection(name, error, cause) :: _ =>
                 complete((StatusCodes.BadRequest, APIError(error)))
+            case UnsupportedRequestContentTypeRejection(msg) :: _ =>
+                complete((StatusCodes.UnsupportedMediaType, APIError(msg)))
             case _ :: _ =>
                 complete((StatusCodes.BadRequest, APIError("Failed to process request")))
         }

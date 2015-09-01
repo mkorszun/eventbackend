@@ -21,7 +21,7 @@ trait DocHTTPService extends HttpService with Config {
 
             override def docsPath = "doc"
 
-            override def actorRefFactory = actorRefFactory
+            override def actorRefFactory = DocHTTPService.this.actorRefFactory
 
             override def apiInfo = Some(new ApiInfo(
                 "Biegajmy event backend",

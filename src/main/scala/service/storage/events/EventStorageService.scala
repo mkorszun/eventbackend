@@ -33,6 +33,11 @@ class EventStorageService {
         return collection.find(query).limit(50)
     }
 
+    def getEvent(event_id: String): DBObject = {
+        if (!isEvent(event_id)) throw new EventNotFound
+        return collection.findOne(MongoDBObject("_id" -> event_id))
+    }
+
     def removeParticipant(event_id: String, user: User): DBObject = {
         if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)

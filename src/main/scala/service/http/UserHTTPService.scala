@@ -18,16 +18,20 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
 
     implicit val eventService = new EventStorageService()
 
+    implicit def authenticator: spray.routing.directives.AuthMagnet[User]
+
     object toJson extends JsonUserDirective
 
-    def routes(user: User): Route = {
-        pathPrefix("user" / Segment) {
-            id =>
-                pathEnd {
-                    readUser(id) ~ updateUser(id, user)
-                } ~ path("events") {
-                    listUserEvents(id)
-                }
+    def routes(): Route = {
+        authenticate(authenticator) { user =>
+            pathPrefix("user" / Segment) {
+                id =>
+                    pathEnd {
+                        readUser(id) ~ updateUser(id, user)
+                    } ~ path("events") {
+                        listUserEvents(id)
+                    }
+            }
         }
     }
 
