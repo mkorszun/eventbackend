@@ -22,7 +22,8 @@ class EventStorageService {
     }
 
     def findEvents(user_id: String): DBCursor = {
-        return collection.find($or("user.id" -> user_id, "participants.id" -> user_id))
+        val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
+        return collection.find($or("user.id" -> user_id, "participants.id" -> user_id) ++ ("timestamp" -> timestamp))
     }
 
     def findEvents(x: Double, y: Double, max: Long, tags: Array[String]): DBCursor = {
@@ -63,7 +64,8 @@ class EventStorageService {
         if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
         val update = MongoDBObject("$push" -> MongoDBObject("comments" -> new DBEventComment(user, msg)))
-        val doc = collection.findAndModify(event,  MongoDBObject("comments" -> 1, "_id" -> 0), null, false, update, true, false)
+        val doc = collection
+            .findAndModify(event, MongoDBObject("comments" -> 1, "_id" -> 0), null, false, update, true, false)
         if (doc != null) return doc
         throw new UserNotPresent
     }
