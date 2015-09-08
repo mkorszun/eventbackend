@@ -1,4 +1,5 @@
 import com.typesafe.sbt.SbtStartScript
+import sbt.Keys._
 
 seq(SbtStartScript.startScriptForClassesSettings: _*)
 
@@ -30,6 +31,8 @@ libraryDependencies += "io.spray" % "spray-client_2.11" % "1.3.1"
 libraryDependencies += "org.mongodb" %% "casbah" % "2.7.2"
 
 libraryDependencies += "com.gettyimages" %% "spray-swagger" % "0.5.1"
+
+libraryDependencies += "com.github.seratch" %% "awscala" % "0.5.+"
 
 scalacOptions ++= Seq(
     "-unchecked",

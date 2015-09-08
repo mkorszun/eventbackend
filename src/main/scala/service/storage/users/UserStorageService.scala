@@ -36,6 +36,13 @@ object UserStorageService {
         if (doc != null) Option(publicUserFromDocument(doc)) else None
     }
 
+    def updatePhoto(id: String, token: String, photo_url: String): Option[PublicUser] = {
+        val update = $set("photo_url" -> photo_url)
+        val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
+        val doc = collection.findAndModify(query, null, null, false, update, true, false)
+        if (doc != null) Option(publicUserFromDocument(doc)) else None
+    }
+
     def readPrivateUserData(token: String): Option[User] = {
         val doc = collection.findOne(MongoDBObject("token" -> token))
         if (doc != null) Option(userFromDocument(doc)) else None

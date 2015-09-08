@@ -5,12 +5,15 @@ import javax.ws.rs.Path
 import _root_.directives.{JsonUserDirective, UserPermissions}
 import com.wordnik.swagger.annotations._
 import config.Config
+import model.APIResponse
 import model.event.Event
 import model.user.{PublicUser, User}
+import service.photo.PhotoStorageService
 import service.storage.events.EventStorageService
 import service.storage.users.UserStorageService
 import spray.http.CacheDirectives.`max-age`
 import spray.http.HttpHeaders.`Cache-Control`
+import spray.http.{BodyPart, MultipartFormData}
 import spray.routing._
 
 @Api(value = "/user", description = "User actions", produces = "application/json", position = 1)
@@ -30,6 +33,8 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                         readUser(id) ~ updateUser(id, user)
                     } ~ path("events") {
                         listUserEvents(id)
+                    } ~ path("photo") {
+                        updateUserPhoto(id, user)
                     }
             }
         }
@@ -130,6 +135,52 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                         userData =>
                             complete {
                                 UserStorageService.updateUser(id, user.token, userData)
+                            }
+                    }
+                }
+            }
+        }
+    }
+
+    @Path("/{user_id}/photo")
+    @ApiOperation(
+        httpMethod = "PUT",
+        value = "Update user photo")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "user_id",
+            value = "User to update",
+            required = true,
+            dataType = "string",
+            paramType = "path"),
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "photo",
+            value = "User photo",
+            required = true,
+            dataType = "File",
+            paramType = "form")
+    ))
+    def updateUserPhoto(id: String, user: User): Route = {
+        import format.APIResponseFormat._
+        import spray.httpx.SprayJsonSupport._
+        put {
+            checkPermissions(id, user) {
+                res => {
+                    entity(as[MultipartFormData]) {
+                        formData =>
+                            complete {
+                                val name: String = user.id + ".jpg"
+                                val part: BodyPart = formData.get("photo").get
+                                val bytes: Array[Byte] = part.entity.data.toByteArray
+                                val path: String = PhotoStorageService.upload(name, bytes)
+                                UserStorageService.updatePhoto(id, user.token, path)
+                                APIResponse(path)
                             }
                     }
                 }
