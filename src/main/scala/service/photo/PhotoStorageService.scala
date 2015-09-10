@@ -1,5 +1,7 @@
 package service.photo
 
+import java.util.Calendar
+
 import awscala.s3.{Bucket, S3}
 import com.amazonaws.services.s3.model.ObjectMetadata
 import config.Config
@@ -18,5 +20,9 @@ object PhotoStorageService extends Object with Config {
         metadata.setContentType("image/jpeg")
         bucket.putObjectAsPublicRead(filename, bytes, metadata)
         Seq(S3_PREFIX, S3_BUCKET_NAME, filename).mkString("/")
+    }
+
+    def name(id: String): String = {
+        id + "_" + Calendar.getInstance().getTime().getTime + ".jpg"
     }
 }

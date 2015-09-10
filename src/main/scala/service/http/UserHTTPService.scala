@@ -5,7 +5,6 @@ import javax.ws.rs.Path
 import _root_.directives.{JsonUserDirective, UserPermissions}
 import com.wordnik.swagger.annotations._
 import config.Config
-import model.APIResponse
 import model.event.Event
 import model.user.{PublicUser, User}
 import service.photo.PhotoStorageService
@@ -175,7 +174,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                     entity(as[MultipartFormData]) {
                         formData =>
                             complete {
-                                val name: String = user.id + ".jpg"
+                                val name: String = PhotoStorageService.name(user.id)
                                 val part: BodyPart = formData.get("photo").get
                                 val bytes: Array[Byte] = part.entity.data.toByteArray
                                 val path: String = PhotoStorageService.upload(name, bytes)
