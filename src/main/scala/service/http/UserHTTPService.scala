@@ -167,7 +167,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
             paramType = "form")
     ))
     def updateUserPhoto(id: String, user: User): Route = {
-        import format.APIResponseFormat._
+        import format.PublicUserJsonProtocol._
         import spray.httpx.SprayJsonSupport._
         put {
             checkPermissions(id, user) {
@@ -180,7 +180,6 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                                 val bytes: Array[Byte] = part.entity.data.toByteArray
                                 val path: String = PhotoStorageService.upload(name, bytes)
                                 UserStorageService.updatePhoto(id, user.token, path)
-                                APIResponse(path)
                             }
                     }
                 }
