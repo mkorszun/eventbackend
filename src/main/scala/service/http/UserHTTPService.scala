@@ -178,7 +178,9 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                                 val part: BodyPart = formData.get("photo").get
                                 val bytes: Array[Byte] = part.entity.data.toByteArray
                                 val path: String = PhotoStorageService.upload(name, bytes)
-                                UserStorageService.updatePhoto(id, user.token, path)
+                                val updatedUser: PublicUser = UserStorageService.updatePhoto(id, user.token, path).get
+                                UserStorageService.updateUserData(id, updatedUser)
+                                updatedUser
                             }
                     }
                 }

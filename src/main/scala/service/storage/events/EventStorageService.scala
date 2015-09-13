@@ -8,7 +8,7 @@ import com.mongodb.casbah.commons.{Imports, MongoDBList, MongoDBListBuilder, Mon
 import com.mongodb.casbah.query.dsl.GeoCoords
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import model.event.Event
-import model.user.User
+import model.user.{PublicUser, User}
 import service.storage.users.UserStorageService
 
 class EventStorageService {
@@ -89,6 +89,11 @@ class EventStorageService {
     def deleteEvent(event_id: String, user: User): Unit = {
         if (!isEvent(event_id, user)) throw new EventNotFound
         collection.remove(MongoDBObject("_id" -> event_id, "user.id" -> user.id))
+    }
+
+    def updateOwnerData(id: String, user: PublicUser): Unit = {
+        val update = $set("user" -> UserStorageService.publicUserToDocument(user))
+        collection.update(MongoDBObject("user.id" -> id), update, false, true)
     }
 
     // Helpers =======================================================================================================//

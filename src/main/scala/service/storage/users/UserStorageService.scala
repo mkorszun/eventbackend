@@ -1,15 +1,23 @@
 package service.storage.users
 
+import java.util.concurrent.Executors
+
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBObject}
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import com.mongodb.{DBObject, _}
 import model.token.Token
 import model.user.{PublicUser, User}
+import service.storage.events.EventStorageService
+
+import scala.concurrent.{ExecutionContext, Future}
 
 object UserStorageService {
 
     val collection = getCollection()
+    val executorService = Executors.newFixedThreadPool(10)
+    val eventStorageService = new EventStorageService
+    implicit val executionContext = ExecutionContext.fromExecutorService(executorService)
 
     // Public API ====================================================================================================//
 
@@ -51,6 +59,10 @@ object UserStorageService {
     def readPublicUserData(id: String): Option[PublicUser] = {
         val doc = collection.findOne(MongoDBObject("_id" -> id))
         if (doc != null) Option(publicUserFromDocument(doc)) else None
+    }
+
+    def updateUserData(id: String, user: PublicUser) = Future {
+        eventStorageService.updateOwnerData(id, user)
     }
 
     // Helpers =======================================================================================================//
@@ -126,6 +138,19 @@ object UserStorageService {
             Option(doc.get("telephone").asInstanceOf[String]),
             Option(doc.get("www").asInstanceOf[String]),
             Option(doc.get("email").asInstanceOf[String])
+        )
+    }
+
+    def publicUserToDocument(user: PublicUser): DBObject = {
+        MongoDBObject(
+            "id" -> user.id,
+            "first_name" -> user.first_name,
+            "last_name" -> user.last_name,
+            "photo_url" -> user.photo_url,
+            "bio" -> user.bio,
+            "telephone" -> user.telephone,
+            "www" -> user.www,
+            "email" -> user.email
         )
     }
 
