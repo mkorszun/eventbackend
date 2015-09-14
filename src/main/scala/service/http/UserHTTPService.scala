@@ -133,7 +133,9 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                     entity(as[PublicUser]) {
                         userData =>
                             complete {
-                                UserStorageService.updateUser(id, user.token, userData)
+                                val updatedUser: PublicUser = UserStorageService.updateUser(id, user.token, userData).get
+                                UserStorageService.updateUserData(id, updatedUser)
+                                updatedUser
                             }
                     }
                 }
