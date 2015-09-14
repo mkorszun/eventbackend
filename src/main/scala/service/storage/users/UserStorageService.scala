@@ -63,6 +63,7 @@ object UserStorageService {
 
     def updateUserData(id: String, user: PublicUser) = Future {
         eventStorageService.updateOwnerData(id, user)
+        eventStorageService.updateParticipantsData(id, user)
     }
 
     // Helpers =======================================================================================================//

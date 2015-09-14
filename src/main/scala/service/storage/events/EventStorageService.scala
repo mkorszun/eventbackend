@@ -96,6 +96,11 @@ class EventStorageService {
         collection.update(MongoDBObject("user.id" -> id), update, false, true)
     }
 
+    def updateParticipantsData(id: String, user: PublicUser): Unit = {
+        val update = $set("participants.$.photo_url" -> user.photo_url)
+        collection.update(MongoDBObject("participants.id" -> id), update, false, true)
+    }
+
     // Helpers =======================================================================================================//
 
     private def isEvent(id: String): Boolean = {
