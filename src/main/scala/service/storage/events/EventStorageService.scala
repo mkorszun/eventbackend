@@ -30,7 +30,7 @@ class EventStorageService {
         val geo = MongoDBObject("$geometry" -> new DBGeoPoint(x, y), "$maxDistance" -> max)
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
         val query = MongoDBObject("loc" -> MongoDBObject("$near" -> geo), "timestamp" -> timestamp)
-        if (tags.length > 0) query.put("tags", MongoDBObject("$elemMatch" -> MongoDBObject("$in" -> tags)))
+        if (tags.length > 0) query.put("tags", MongoDBObject("$regex" -> tags(0)))
         return collection.find(query).limit(50)
     }
 
