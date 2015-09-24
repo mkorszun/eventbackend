@@ -23,15 +23,18 @@ class EventStorageService {
 
     def findEvents(user_id: String): DBCursor = {
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
-        return collection.find($or("user.id" -> user_id, "participants.id" -> user_id) ++ ("timestamp" -> timestamp))
+        val query = $or("user.id" -> user_id, "participants.id" -> user_id) ++ ("timestamp" -> timestamp)
+        val exclusions = MongoDBObject("participants" -> 0, "comments" -> 0)
+        return collection.find(query, exclusions)
     }
 
     def findEvents(x: Double, y: Double, max: Long, tags: Array[String]): DBCursor = {
         val geo = MongoDBObject("$geometry" -> new DBGeoPoint(x, y), "$maxDistance" -> max)
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
         val query = MongoDBObject("loc" -> MongoDBObject("$near" -> geo), "timestamp" -> timestamp)
+        val exclusions = MongoDBObject("participants" -> 0, "comments" -> 0)
         if (tags.length > 0) query.put("tags", MongoDBObject("$regex" -> tags(0)))
-        return collection.find(query).limit(50)
+        return collection.find(query, exclusions)
     }
 
     def getEvent(event_id: String): DBObject = {
