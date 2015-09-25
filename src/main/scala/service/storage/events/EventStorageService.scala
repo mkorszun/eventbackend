@@ -46,7 +46,7 @@ class EventStorageService {
         if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
         val participant = MongoDBObject("participants" -> MongoDBObject("id" -> user.id))
-        val update = MongoDBObject("$pull" -> participant)
+        val update = MongoDBObject("$pull" -> participant, "$inc" -> MongoDBObject("spots" -> -1))
         val doc = collection.findAndModify(event, null, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserNotPresent
@@ -57,7 +57,7 @@ class EventStorageService {
         val constraint = MongoDBObject("$nin" -> (MongoDBList.newBuilder[String] += user.id).result())
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> constraint)
         val participant = MongoDBObject("participants" -> UserStorageService.userToParticipantDocument(user))
-        val update = MongoDBObject("$addToSet" -> participant)
+        val update = MongoDBObject("$addToSet" -> participant, "$inc" -> MongoDBObject("spots" -> 1))
         val doc = collection.findAndModify(event, null, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserAlreadyAdded
@@ -89,9 +89,14 @@ class EventStorageService {
         return collection.findAndModify(MongoDBObject("_id" -> event_id), null, null, false, update, true, false)
     }
 
-    def deleteEvent(event_id: String, user: User): Unit = {
+    def deleteEvent(event_id: String, user: User): DBObject = {
         if (!isEvent(event_id, user)) throw new EventNotFound
-        collection.remove(MongoDBObject("_id" -> event_id, "user.id" -> user.id))
+        val query = MongoDBObject("_id" -> event_id, "user.id" -> user.id)
+        val participantUpdate = MongoDBObject("participants" -> MongoDBObject("id" -> user.id))
+        val userUpdate = MongoDBObject("user" -> MongoDBObject())
+        val spotsUpdate = MongoDBObject("spots" -> -1)
+        val update = MongoDBObject("$pull" -> participantUpdate, "$inc" -> spotsUpdate, "$set" -> userUpdate)
+        collection.findAndModify(query, null, null, false, update, true, false)
     }
 
     def updateOwnerData(id: String, user: PublicUser): Unit = {
