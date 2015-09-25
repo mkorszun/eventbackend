@@ -23,8 +23,8 @@ class EventStorageService {
 
     def findEvents(user_id: String): DBCursor = {
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
-        val query = $or("user.id" -> user_id, "participants.id" -> user_id) ++ ("timestamp" -> timestamp)
-        val exclusions = MongoDBObject("participants" -> 0, "comments" -> 0)
+        val query = $or("user.id" -> user_id, "participants.id" -> user_id) ++ ("timestamp" -> timestamp) ++ ("deleted" -> false)
+        val exclusions = MongoDBObject("participants" -> 0, "comments" -> 0, "deleted" -> 0)
         return collection.find(query, exclusions)
     }
 
@@ -93,9 +93,9 @@ class EventStorageService {
         if (!isEvent(event_id, user)) throw new EventNotFound
         val query = MongoDBObject("_id" -> event_id, "user.id" -> user.id)
         val participantUpdate = MongoDBObject("participants" -> MongoDBObject("id" -> user.id))
-        val userUpdate = MongoDBObject("user" -> MongoDBObject())
+        val updateDeleteFlag = MongoDBObject("deleted" -> true)
         val spotsUpdate = MongoDBObject("spots" -> -1)
-        val update = MongoDBObject("$pull" -> participantUpdate, "$inc" -> spotsUpdate, "$set" -> userUpdate)
+        val update = MongoDBObject("$pull" -> participantUpdate, "$inc" -> spotsUpdate, "$set" -> updateDeleteFlag)
         collection.findAndModify(query, null, null, false, update, true, false)
     }
 
@@ -152,6 +152,8 @@ class EventStorageService {
         put("tags", event.tags)
         put("distance", event.distance)
         put("pace", event.pace)
+        put("deleted", false)
+        put("spots", 1)
     }
 
     private class DBEventComment(user: User, msg: String) extends BasicDBObject {
