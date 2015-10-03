@@ -1,6 +1,7 @@
 package auth.providers
 
 import akka.actor.ActorSystem
+import auth.BearerTokenGenerator
 import model.token.Token
 import model.user.User
 import service.storage.users.UserStorageService
@@ -48,8 +49,9 @@ object FacebookProvider {
         val resp: Future[Future[Option[Token]]] = response.map[Future[Option[Token]]] {
             case FacebookUser(id, first_name, last_name) =>
                 Future {
+                    val userToken = BearerTokenGenerator.generateSHAToken(id)
                     val newUser: User = User(
-                        java.util.UUID.randomUUID.toString, id, "facebook", java.util.UUID.randomUUID.toString,
+                        java.util.UUID.randomUUID.toString, id, "facebook", userToken,
                         first_name, last_name, photo_link(id), "", None, None, None)
                     Option(UserStorageService.createUser(newUser))
                 }
