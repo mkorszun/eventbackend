@@ -5,8 +5,9 @@ import javax.ws.rs.Path
 import _root_.directives.JsonEventDirective
 import com.wordnik.swagger.annotations._
 import config.Config
+import model.APIResponse
 import model.event.Event
-import model.user.User
+import model.user.{PublicUser, User}
 import service.storage.events.EventStorageService
 import spray.http.CacheDirectives.`max-age`
 import spray.http.HttpHeaders.`Cache-Control`
@@ -262,7 +263,8 @@ trait EventHTTPService extends HttpService with Config {
     @Path("/{event_id}")
     @ApiOperation(
         httpMethod = "DELETE",
-        value = "Delete event")
+        value = "Delete event",
+        response = classOf[APIResponse])
     @ApiImplicitParams(Array(
         new ApiImplicitParam(
             name = "token",
