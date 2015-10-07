@@ -91,11 +91,15 @@ class EventStorageService {
 
     def deleteEvent(event_id: String, user: User): Unit = {
         if (!isEvent(event_id, user)) throw new EventNotFound
-        val query = MongoDBObject("_id" -> event_id, "user.id" -> user.id, "$where" -> "this.participants.length>1")
-        val participantUpdate = MongoDBObject("participants" -> MongoDBObject("id" -> user.id))
-        val update = MongoDBObject("$pull" -> participantUpdate, "$inc" -> MongoDBObject("spots" -> -1))
-        val doc = collection.findAndModify(query, null, null, false, update, true, false)
-        return if (doc != null) doc else collection.remove(MongoDBObject("_id" -> event_id, "user.id" -> user.id))
+
+        val doc = collection.findAndRemove(MongoDBObject(
+            "_id" -> event_id,
+            "user.id" -> user.id,
+            "participants.id" -> user.id,
+            "$where" -> "this.participants.length==1")
+        )
+
+        if (doc == null) throw new EventHasOtherParticipants
     }
 
     def updateOwnerData(id: String, user: PublicUser): Unit = {

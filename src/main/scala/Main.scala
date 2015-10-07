@@ -8,7 +8,7 @@ import auth.providers.FacebookProvider.InvalidTokenException
 import model._
 import model.user.User
 import service.http._
-import service.storage.events.{EventNotFound, UserAlreadyAdded, UserNotPresent}
+import service.storage.events.{EventHasOtherParticipants, EventNotFound, UserAlreadyAdded, UserNotPresent}
 import service.storage.users.UserStorageService
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
@@ -139,6 +139,12 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                         log.warning("Request to {} not found", uri)
                         val error: APIError = new APIError("User not part of this event")
                         complete((NotFound, error))
+                    }
+                case e: EventHasOtherParticipants =>
+                    requestUri { uri =>
+                        log.warning("Request to {} not found", uri)
+                        val error: APIError = new APIError("Can not delete event with participants")
+                        complete((BadRequest, error))
                     }
                 case e: InvalidTokenException =>
                     requestUri { uri =>
