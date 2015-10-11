@@ -6,8 +6,8 @@ import _root_.directives.JsonEventDirective
 import com.wordnik.swagger.annotations._
 import config.Config
 import model.APIResponse
-import model.event.Event
-import model.user.{PublicUser, User}
+import model.event.{Comment, Event}
+import model.user.User
 import service.storage.events.EventStorageService
 import spray.http.CacheDirectives.`max-age`
 import spray.http.HttpHeaders.`Cache-Control`
@@ -72,17 +72,30 @@ trait EventHTTPService extends HttpService with Config {
             name = "msg",
             value = "Message",
             required = true,
-            dataType = "string",
-            paramType = "query")
+            dataType = "Comment",
+            paramType = "body")
     ))
     def addComment(user: User, id: String): Route = {
+        import format.CommentJsonProtocol._
+        import spray.httpx.SprayJsonSupport._
         put {
-            parameters('msg.as[String]) {
-                msg =>
-                    complete {
-                        toJson {
-                            eventService.addComment(id, user, msg)
-                        }
+            (parameters('msg.as[String] ?) & entity(as[Option[Comment]])) {
+                (msg, comment) =>
+                    (msg, comment) match {
+                        case (None, None) =>
+                            reject(MissingQueryParamRejection("msg"))
+                        case (None, Some(m)) =>
+                            complete {
+                                toJson {
+                                    eventService.addComment(id, user, m.msg)
+                                }
+                            }
+                        case (Some(m), None) =>
+                            complete {
+                                toJson {
+                                    eventService.addComment(id, user, m)
+                                }
+                            }
                     }
             }
         }
