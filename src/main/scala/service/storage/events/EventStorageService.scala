@@ -23,7 +23,7 @@ class EventStorageService {
 
     def findEvents(user_id: String): DBCursor = {
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
-        val query = $or("user.id" -> user_id, "participants.id" -> user_id) ++ ("timestamp" -> timestamp)
+        val query = MongoDBObject("participants.id" -> user_id, "timestamp" -> timestamp)
         val exclusions = MongoDBObject("participants" -> 0, "comments" -> 0, "deleted" -> 0)
         return collection.find(query, exclusions)
     }
