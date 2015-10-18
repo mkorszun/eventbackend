@@ -6,7 +6,7 @@ import _root_.directives.{JsonUserDirective, UserPermissions}
 import com.wordnik.swagger.annotations._
 import config.Config
 import model.event.Event
-import model.user.{PublicUser, User}
+import model.user.{PublicUser, User, UserDevice}
 import service.photo.PhotoStorageService
 import service.storage.events.EventStorageService
 import service.storage.users.UserStorageService
@@ -34,6 +34,8 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                         listUserEvents(id)
                     } ~ path("photo") {
                         updateUserPhoto(id, user)
+                    } ~ path("device") {
+                        updateUserDevice(id, user)
                     }
             }
         }
@@ -133,7 +135,9 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                     entity(as[PublicUser]) {
                         userData =>
                             complete {
-                                val updatedUser: PublicUser = UserStorageService.updateUser(id, user.token, userData).get
+                                val updatedUser: PublicUser = UserStorageService
+                                    .updateUser(id, user.token, userData)
+                                    .get
                                 UserStorageService.updateUserData(id, updatedUser)
                                 updatedUser
                             }
@@ -184,6 +188,49 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                                 UserStorageService.updateUserData(id, updatedUser)
                                 updatedUser
                             }
+                    }
+                }
+            }
+        }
+    }
+
+    @Path("/{user_id}/device")
+    @ApiOperation(
+        httpMethod = "PUT",
+        value = "Update device info for push notifications")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "user_id",
+            value = "User to update",
+            required = true,
+            dataType = "string",
+            paramType = "path"),
+        new ApiImplicitParam(
+            name = "token",
+            value = "User auth token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "device",
+            value = "User device info",
+            required = true,
+            dataType = "UserDevice",
+            paramType = "body")
+    ))
+    def updateUserDevice(id: String, user: User): Route = {
+        import format.APIResponseFormat._
+        import format.UserDeviceJsonProtocol._
+        import spray.httpx.SprayJsonSupport._
+        put {
+            checkPermissions(id, user) {
+                res => {
+                    entity(as[UserDevice]) { device_info =>
+                        complete {
+                            toJson {
+                                UserStorageService.updateUserDevice(id, device_info)
+                            }
+                        }
                     }
                 }
             }

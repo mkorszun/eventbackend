@@ -7,7 +7,7 @@ import com.mongodb.casbah.commons.{Imports, MongoDBObject}
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import com.mongodb.{DBObject, _}
 import model.token.Token
-import model.user.{PublicUser, User}
+import model.user.{PublicUser, User, UserDevice}
 import service.storage.events.EventStorageService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -64,6 +64,13 @@ object UserStorageService {
     def updateUserData(id: String, user: PublicUser) = Future {
         eventStorageService.updateOwnerData(id, user)
         eventStorageService.updateParticipantsData(id, user)
+    }
+
+    def updateUserDevice(id: String, device: UserDevice): Unit = {
+        val query = MongoDBObject("_id" -> id)
+        val deviceDoc = MongoDBObject("device_token" -> device.device_token, "platform" -> device.platform)
+        val update = MongoDBObject("$addToSet" -> MongoDBObject("devices" -> deviceDoc))
+        collection.findAndModify(query, null, null, false, update, true, false)
     }
 
     // Helpers =======================================================================================================//

@@ -91,6 +91,8 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                 complete((StatusCodes.BadRequest, APIError(error)))
             case UnsupportedRequestContentTypeRejection(msg) :: _ =>
                 complete((StatusCodes.UnsupportedMediaType, APIError(msg)))
+            case RequestEntityExpectedRejection :: _ =>
+                complete((StatusCodes.UnsupportedMediaType, APIError("Wrong or missing content")));
             case _ :: _ =>
                 complete((StatusCodes.BadRequest, APIError("Failed to process request")))
         }
