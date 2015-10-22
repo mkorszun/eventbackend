@@ -84,13 +84,13 @@ trait EventHTTPService extends HttpService with Config {
                     (msg, comment) match {
                         case (None, None) =>
                             reject(MissingQueryParamRejection("msg"))
-                        case (None, Some(m)) =>
+                        case (_, Some(m)) =>
                             complete {
                                 toJson {
                                     eventService.addComment(id, user, m.msg)
                                 }
                             }
-                        case (Some(m), None) =>
+                        case (Some(m), _) =>
                             complete {
                                 toJson {
                                     eventService.addComment(id, user, m)
