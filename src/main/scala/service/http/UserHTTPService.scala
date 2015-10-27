@@ -215,7 +215,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
             name = "device",
             value = "User device info",
             required = true,
-            dataType = "UserDevice",
+            dataType = "model.user.UserDevice",
             paramType = "body")
     ))
     def updateUserDevice(id: String, user: User): Route = {
