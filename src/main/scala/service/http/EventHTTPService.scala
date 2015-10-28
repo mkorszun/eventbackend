@@ -3,11 +3,13 @@ package service.http
 import javax.ws.rs.Path
 
 import _root_.directives.JsonEventDirective
+import akka.actor.{ActorSystem, Props}
 import com.wordnik.swagger.annotations._
 import config.Config
 import model.APIResponse
 import model.event.{Comment, Event}
 import model.user.User
+import push.{EventChanged, NewComment, NewParticipant, PushMessageActor}
 import service.storage.events.EventStorageService
 import spray.http.CacheDirectives.`max-age`
 import spray.http.HttpHeaders.`Cache-Control`
@@ -16,6 +18,9 @@ import spray.routing._
 
 @Api(value = "/event", description = "Event actions", produces = "application/json", position = 1)
 trait EventHTTPService extends HttpService with Config {
+
+    implicit val system = ActorSystem("my-system")
+    val pushActor = system.actorOf(Props[PushMessageActor])
 
     implicit val eventService = new EventStorageService()
 
@@ -87,13 +92,17 @@ trait EventHTTPService extends HttpService with Config {
                         case (_, Some(m)) =>
                             complete {
                                 toJson {
-                                    eventService.addComment(id, user, m.msg)
+                                    val res = eventService.addComment(id, user, m.msg)
+                                    pushActor ! NewComment(id)
+                                    res
                                 }
                             }
                         case (Some(m), _) =>
                             complete {
                                 toJson {
-                                    eventService.addComment(id, user, m)
+                                    val res = eventService.addComment(id, user, m)
+                                    pushActor ! NewComment(id)
+                                    res
                                 }
                             }
                     }
@@ -151,7 +160,9 @@ trait EventHTTPService extends HttpService with Config {
         put {
             complete {
                 toJson {
-                    eventService.addParticipant(id, user)
+                    val res = eventService.addParticipant(id, user)
+                    pushActor ! NewParticipant(id)
+                    res
                 }
             }
         }
@@ -266,7 +277,9 @@ trait EventHTTPService extends HttpService with Config {
                 event =>
                     complete {
                         toJson {
-                            eventService.updateEvent(event_id, user, event)
+                            val res = eventService.updateEvent(event_id, user, event)
+                            pushActor ! EventChanged(event_id)
+                            res
                         }
                     }
             }
