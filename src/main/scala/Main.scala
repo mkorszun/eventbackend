@@ -55,6 +55,10 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
         override implicit def actorRefFactory: ActorRefFactory = system
     }
 
+    val admin_service = new AdminHTTPService {
+        override implicit def actorRefFactory: ActorRefFactory = system
+    }
+
     startServer(interface = "0.0.0.0", port = System.getenv("PORT").toInt) {
         cors {
             path("") {
@@ -64,7 +68,7 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
             } ~ doc_service.routes() ~
                 handleRejections(MyRejectionHandler.jsonRejectionHandler) {
                     handleExceptions(MyExceptionHandler.myExceptionHandler) {
-                        tag_service.public_routes() ~
+                        admin_service.routes() ~ tag_service.public_routes() ~
                             token_service.routes() ~
                             events_service.routes() ~
                             user_service.routes()

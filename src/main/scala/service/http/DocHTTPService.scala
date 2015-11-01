@@ -13,7 +13,7 @@ trait DocHTTPService extends HttpService with Config {
         new SwaggerHttpService {
 
             override def apiTypes = Seq(typeOf[EventHTTPService], typeOf[UserHTTPService], typeOf[TokenHTTPService],
-                typeOf[TagHTTPService])
+                typeOf[TagHTTPService], typeOf[AdminHTTPService])
 
             override def apiVersion = "2.0"
 
