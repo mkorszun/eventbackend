@@ -141,7 +141,7 @@ object UserStorageService {
             Option(doc.get("_id").toString),
             doc.get("first_name").toString,
             doc.get("last_name").toString,
-            doc.get("photo_url").toString,
+            Option(doc.get("photo_url").toString),
             doc.get("bio").toString,
             Option(doc.get("telephone").asInstanceOf[String]),
             Option(doc.get("www").asInstanceOf[String]),
