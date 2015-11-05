@@ -54,7 +54,7 @@ trait AdminStorageService {
         val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
         val mongoClient = MongoClient(uri)
         val db = mongoClient(uri.database.get)
-        db.getCollection("users")
+        db.getCollection("events")
     }
 
     // DB document objects ===========================================================================================//
