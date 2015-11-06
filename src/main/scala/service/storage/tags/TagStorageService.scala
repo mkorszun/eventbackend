@@ -3,15 +3,13 @@ package service.storage.tags
 import java.util.Calendar
 
 import com.mongodb
-import com.mongodb._
 import com.mongodb.casbah.Imports.{AggregationOptions, _}
 import com.mongodb.casbah.commons.MongoDBObject
-import com.mongodb.casbah.query.dsl.GeoCoords
-import com.mongodb.casbah.{MongoClient, MongoClientURI};
+import service.storage.utils.Storage
 
-object TagStorageService {
+object TagStorageService extends Storage {
 
-    val collection = getCollection()
+    val collection = getCollection("events")
 
     // Public API ====================================================================================================//
 
@@ -25,40 +23,12 @@ object TagStorageService {
         }
 
         steps.add(MongoDBObject("$unwind" -> "$tags"))
-        steps.add(MongoDBObject("$group" -> new Group()))
+        steps.add(MongoDBObject("$group" -> new Group("$tags")))
 
-        return result(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)))
+        return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)))
     }
-
-    // Helpers =======================================================================================================//
-
-    private def getCollection(): DBCollection = {
-        val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
-        val mongoClient = MongoClient(uri)
-        val db = mongoClient(uri.database.get)
-        db.getCollection("events")
-    }
-
-    private def result(results: Cursor): Array[String] = {
-        var res: Array[String] = Array()
-
-        if (results.hasNext) {
-            val value: AnyRef = results.next().get("aggregated")
-            res = toArray(value.asInstanceOf[BasicDBList])
-        }
-
-        results.close()
-        return res
-    }
-
-    private def toArray(obj: BasicDBList): Array[String] = (obj.toList map (_.toString)).toArray
 
     // DB document objects ===========================================================================================//
-
-    private class DBGeoPoint(x: Double, y: Double) extends BasicDBObject {
-        put("type", "Point")
-        put("coordinates", GeoCoords(y, x))
-    }
 
     private class DBGeoNear(x: Double, y: Double, max: Long, timestamp: MongoDBObject) extends BasicDBObject {
         put("near", new DBGeoPoint(x, y))
@@ -66,11 +36,6 @@ object TagStorageService {
         put("query", MongoDBObject("timestamp" -> timestamp))
         put("spherical", true)
         put("distanceField", "dist.location")
-    }
-
-    private class Group extends BasicDBObject {
-        put("_id", "all")
-        put("aggregated", MongoDBObject("$addToSet" -> "$tags"))
     }
 
     //================================================================================================================//

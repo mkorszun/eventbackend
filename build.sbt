@@ -34,6 +34,8 @@ libraryDependencies += "com.gettyimages" %% "spray-swagger" % "0.5.1"
 
 libraryDependencies += "com.github.seratch" %% "awscala" % "0.5.+"
 
+libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.10.32"
+
 scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",

@@ -9,4 +9,8 @@ trait Config {
     val AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY")
     val S3_BUCKET_NAME = System.getenv("S3_BUCKET_NAME")
     val S3_PREFIX = System.getenv("S3_PREFIX")
+    val APP_ANDROID_ARN = System.getenv("APP_ANDROID_ARN")
+    val APP_IOS_ARN = System.getenv("APP_IOS_ARN")
+    val PUSH_EXECUTOR_SIZE = System.getenv("PUSH_EXECUTOR_SIZE").toInt
+    val REGISTRATION_EXECUTOR_SIZE = System.getenv("REGISTRATION_EXECUTOR_SIZE").toInt
 }

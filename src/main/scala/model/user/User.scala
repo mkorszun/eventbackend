@@ -11,4 +11,5 @@ case class User(
     bio: String,
     telephone: Option[String],
     www: Option[String],
-    email: Option[String])
+    email: Option[String],
+    devices: Option[Array[String]])

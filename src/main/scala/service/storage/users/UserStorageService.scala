@@ -2,21 +2,21 @@ package service.storage.users
 
 import java.util.concurrent.Executors
 
+import com.mongodb.DBObject
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBObject}
-import com.mongodb.casbah.{MongoClient, MongoClientURI}
-import com.mongodb.{DBObject, _}
 import model.token.Token
-import model.user.{PublicUser, User, UserDevice}
+import model.user.{PublicUser, User}
 import service.storage.events.EventStorageService
+import service.storage.utils.Storage
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object UserStorageService {
+object UserStorageService extends Storage {
 
-    val collection = getCollection()
+    val collection = getCollection("users")
     val executorService = Executors.newFixedThreadPool(10)
-    val eventStorageService = new EventStorageService
+    val eventStorageService = EventStorageService
     implicit val executionContext = ExecutionContext.fromExecutorService(executorService)
 
     // Public API ====================================================================================================//
@@ -66,20 +66,18 @@ object UserStorageService {
         eventStorageService.updateParticipantsData(id, user)
     }
 
-    def updateUserDevice(id: String, device: UserDevice): Unit = {
+    def updateUserDevice(id: String, token: String): Array[String] = {
         val query = MongoDBObject("_id" -> id)
-        val deviceDoc = MongoDBObject("device_token" -> device.device_token, "platform" -> device.platform)
-        val update = MongoDBObject("$addToSet" -> MongoDBObject("devices" -> deviceDoc))
-        collection.findAndModify(query, null, null, false, update, true, false)
+        val update = MongoDBObject("$addToSet" -> MongoDBObject("devices" -> token))
+        val devices: AnyRef = collection.findAndModify(query, null, null, false, update, true, false).get("devices")
+        toArray(devices.asInstanceOf[BasicDBList])
     }
 
-    // Helpers =======================================================================================================//
-
-    private def getCollection(): DBCollection = {
-        val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
-        val mongoClient = MongoClient(uri)
-        val db = mongoClient(uri.database.get)
-        db.getCollection("users")
+    def getUserDevices(id: String): Array[String] = {
+        val query = MongoDBObject("_id" -> id)
+        val user = collection.findOne(query)
+        val devices: AnyRef = user.get("devices")
+        toArray(devices.asInstanceOf[BasicDBList])
     }
 
     // DB document objects ===========================================================================================//
@@ -116,7 +114,8 @@ object UserStorageService {
     def userToParticipantDocument(user: User): DBObject = {
         MongoDBObject(
             "id" -> user.id,
-            "photo_url" -> user.photo_url
+            "photo_url" -> user.photo_url,
+            "devices" -> user.devices
         )
     }
 
@@ -132,7 +131,8 @@ object UserStorageService {
             doc.get("bio").toString,
             Option(doc.get("telephone").asInstanceOf[String]),
             Option(doc.get("www").asInstanceOf[String]),
-            Option(doc.get("email").asInstanceOf[String])
+            Option(doc.get("email").asInstanceOf[String]),
+            Option(toArray(doc.get("devices").asInstanceOf[BasicDBList]))
         )
     }
 

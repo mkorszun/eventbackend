@@ -3,10 +3,12 @@ package service.http
 import javax.ws.rs.Path
 
 import _root_.directives.{JsonUserDirective, UserPermissions}
+import akka.actor.{ActorSystem, Props}
 import com.wordnik.swagger.annotations._
 import config.Config
 import model.event.Event
 import model.user.{PublicUser, User, UserDevice}
+import push.{DeviceRegistrationActor, RegisterDevice}
 import service.photo.PhotoStorageService
 import service.storage.events.EventStorageService
 import service.storage.users.UserStorageService
@@ -18,7 +20,10 @@ import spray.routing._
 @Api(value = "/user", description = "User actions", produces = "application/json", position = 1)
 trait UserHTTPService extends HttpService with UserPermissions with Config {
 
-    implicit val eventService = new EventStorageService()
+    implicit val system = ActorSystem("my-system")
+    val registrationActor = system.actorOf(Props[DeviceRegistrationActor])
+
+    implicit val eventService = EventStorageService
 
     implicit def authenticator: spray.routing.directives.AuthMagnet[User]
 
@@ -228,7 +233,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                     entity(as[UserDevice]) { device_info =>
                         complete {
                             toJson {
-                                UserStorageService.updateUserDevice(id, device_info)
+                                registrationActor ! RegisterDevice(id, device_info)
                             }
                         }
                     }

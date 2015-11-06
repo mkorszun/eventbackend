@@ -22,7 +22,7 @@ trait EventHTTPService extends HttpService with Config {
     implicit val system = ActorSystem("my-system")
     val pushActor = system.actorOf(Props[PushMessageActor])
 
-    implicit val eventService = new EventStorageService()
+    implicit val eventService = EventStorageService
 
     implicit def authenticator: spray.routing.directives.AuthMagnet[User]
 

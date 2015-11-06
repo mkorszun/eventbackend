@@ -2,18 +2,17 @@ package service.storage.events
 
 import java.util.{Calendar, Date}
 
-import com.mongodb._
+import com.mongodb.DBCursor
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBList, MongoDBListBuilder, MongoDBObject}
-import com.mongodb.casbah.query.dsl.GeoCoords
-import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import model.event.Event
 import model.user.{PublicUser, User}
 import service.storage.users.UserStorageService
+import service.storage.utils.Storage
 
-class EventStorageService {
+object EventStorageService extends Storage {
 
-    val collection = getCollection()
+    val collection = getCollection("events")
 
     // Public API ====================================================================================================//
 
@@ -112,6 +111,22 @@ class EventStorageService {
         collection.update(MongoDBObject("participants.id" -> id), update, false, true)
     }
 
+    def updateParticipantsDevices(id: String, devices: Array[String]): Unit = {
+        val update = $set("participants.$.devices" -> devices)
+        collection.update(MongoDBObject("participants.id" -> id), update, false, true)
+    }
+
+    def getEventDevices(id: String): Array[String] = {
+        val steps: java.util.List[DBObject] = aggregationSteps(Array(
+            MongoDBObject("$match" -> MongoDBObject("_id" -> id)),
+            MongoDBObject("$project" -> MongoDBObject("a" -> "$participants.devices", "b" -> "$headline")),
+            MongoDBObject("$unwind" -> "$a"),
+            MongoDBObject("$unwind" -> "$a"),
+            MongoDBObject("$group" -> new Group("$a")))
+        )
+        return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)))
+    }
+
     // Helpers =======================================================================================================//
 
     private def isEvent(id: String): Boolean = {
@@ -129,19 +144,7 @@ class EventStorageService {
         return builder.result()
     }
 
-    private def getCollection(): DBCollection = {
-        val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
-        val mongoClient = MongoClient(uri)
-        val db = mongoClient(uri.database.get)
-        db.getCollection("events")
-    }
-
     // DB document objects ===========================================================================================//
-
-    private class DBGeoPoint(x: Double, y: Double) extends MongoDBObject {
-        put("type", "Point")
-        put("coordinates", GeoCoords(y, x))
-    }
 
     private class DBEvent(user: User, event: Event) extends BasicDBObject {
         put("_id", java.util.UUID.randomUUID.toString)
