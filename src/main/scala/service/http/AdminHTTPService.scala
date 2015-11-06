@@ -24,11 +24,11 @@ trait AdminHTTPService extends HttpService with Config with AdminStorageService 
             pathPrefix("admin") {
                 pathEnd {
                     complete("Admin interface")
-                } ~ path("event") {
+                } ~ pathPrefix("event") {
                     pathEnd {
                         listEvents ~ createEvent
                     } ~ path(Segment) { id =>
-                        updateEvent(id) ~ deleteEvent(id)
+                        readEvent(id) ~ updateEvent(id) ~ deleteEvent(id)
                     }
                 }
             }
@@ -73,6 +73,28 @@ trait AdminHTTPService extends HttpService with Config with AdminStorageService 
                             adminCreate(event)
                         }
                     }
+            }
+        }
+    }
+
+    @Path("/event/{event_id}")
+    @ApiOperation(
+        httpMethod = "GET",
+        value = "Read event")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "event_id",
+            value = "Event to read",
+            required = true,
+            dataType = "string",
+            paramType = "path")
+    ))
+    def readEvent(id: String): Route = {
+        get {
+            complete {
+                toJson {
+                    adminRead(id)
+                }
             }
         }
     }

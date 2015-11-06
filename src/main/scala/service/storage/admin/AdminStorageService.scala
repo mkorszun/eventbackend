@@ -21,6 +21,11 @@ trait AdminStorageService {
         return collection.find(MongoDBObject(), MongoDBObject("comments" -> 0, "participants" -> 0))
     }
 
+    def adminRead(event_id: String): DBObject = {
+        if (!isEvent(event_id)) throw new EventNotFound
+        return collection.findOne(MongoDBObject("_id" -> event_id))
+    }
+
     def adminUpdate(event_id: String, event: AdminEvent): DBObject = {
         if (!isEvent(event_id)) throw new EventNotFound
 
