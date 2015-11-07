@@ -8,6 +8,10 @@ import com.mongodb.{Cursor, DBCollection}
 
 trait Storage {
 
+    val EVENT_DETAILS_FIELDS = MongoDBObject("participants.devices" -> 0)
+    val EVENT_LIST_FIELDS = MongoDBObject("comments" -> 0, "participants" -> 0, "deleted" -> 0)
+    val EVENT_COMMENTS_FIELDS = MongoDBObject("comments" -> 1, "_id" -> 0)
+
     def getCollection(collection: String): DBCollection = {
         val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
         val mongoClient = MongoClient(uri)

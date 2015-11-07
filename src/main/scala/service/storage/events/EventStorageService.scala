@@ -23,22 +23,22 @@ object EventStorageService extends Storage {
     def findEvents(user_id: String): DBCursor = {
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
         val query = MongoDBObject("participants.id" -> user_id, "timestamp" -> timestamp)
-        val exclusions = MongoDBObject("participants" -> 0, "comments" -> 0, "deleted" -> 0)
-        return collection.find(query, exclusions)
+        return collection.find(query, EVENT_LIST_FIELDS)
     }
 
     def findEvents(x: Double, y: Double, max: Long, tags: Array[String]): DBCursor = {
         val geo = MongoDBObject("$geometry" -> new DBGeoPoint(x, y), "$maxDistance" -> max)
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
         val query = MongoDBObject("loc" -> MongoDBObject("$near" -> geo), "timestamp" -> timestamp)
-        val exclusions = MongoDBObject("participants" -> 0, "comments" -> 0)
         if (tags.length > 0) query.put("tags", MongoDBObject("$regex" -> tags(0)))
-        return collection.find(query, exclusions)
+        return collection.find(query, EVENT_LIST_FIELDS)
     }
 
     def getEvent(event_id: String): DBObject = {
-        if (!isEvent(event_id)) throw new EventNotFound
-        return collection.findOne(MongoDBObject("_id" -> event_id))
+        val query = MongoDBObject("_id" -> event_id)
+        val doc = collection.findOne(query, EVENT_DETAILS_FIELDS)
+        if (doc != null) return doc
+        throw new EventNotFound
     }
 
     def removeParticipant(event_id: String, user: User): DBObject = {
@@ -46,7 +46,7 @@ object EventStorageService extends Storage {
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
         val participant = MongoDBObject("participants" -> MongoDBObject("id" -> user.id))
         val update = MongoDBObject("$pull" -> participant, "$inc" -> MongoDBObject("spots" -> -1))
-        val doc = collection.findAndModify(event, null, null, false, update, true, false)
+        val doc = collection.findAndModify(event, EVENT_DETAILS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserNotPresent
     }
@@ -57,24 +57,20 @@ object EventStorageService extends Storage {
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> constraint)
         val participant = MongoDBObject("participants" -> UserStorageService.userToParticipantDocument(user))
         val update = MongoDBObject("$addToSet" -> participant, "$inc" -> MongoDBObject("spots" -> 1))
-        val doc = collection.findAndModify(event, null, null, false, update, true, false)
+        val doc = collection.findAndModify(event, EVENT_DETAILS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserAlreadyAdded
     }
 
     def addComment(event_id: String, user: User, msg: String): DBObject = {
-        if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
         val update = MongoDBObject("$push" -> MongoDBObject("comments" -> new DBEventComment(user, msg)))
-        val doc = collection
-            .findAndModify(event, MongoDBObject("comments" -> 1, "_id" -> 0), null, false, update, true, false)
+        val doc = collection.findAndModify(event, EVENT_COMMENTS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
-        throw new UserNotPresent
+        throw new EventNotFound
     }
 
     def updateEvent(event_id: String, user: User, event: Event): DBObject = {
-        if (!isEvent(event_id, user)) throw new EventNotFound
-
         val update = $set(
             "headline" -> event.headline,
             "description" -> event.description,
@@ -85,7 +81,10 @@ object EventStorageService extends Storage {
             "pace" -> event.pace
         )
 
-        return collection.findAndModify(MongoDBObject("_id" -> event_id), null, null, false, update, true, false)
+        val query = MongoDBObject("_id" -> event_id)
+        val doc = collection.findAndModify(query, EVENT_DETAILS_FIELDS, null, false, update, true, false)
+        if (doc != null) return doc
+        throw new EventNotFound
     }
 
     def deleteEvent(event_id: String, user: User): Unit = {

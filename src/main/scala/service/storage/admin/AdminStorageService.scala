@@ -2,33 +2,36 @@ package service.storage.admin
 
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
-import com.mongodb.casbah.query.dsl.GeoCoords
-import com.mongodb.casbah.{MongoClient, MongoClientURI}
-import com.mongodb.{BasicDBObject, DBCollection, DBCursor}
+import com.mongodb.{BasicDBObject, DBCursor}
 import model.admin.AdminEvent
-import service.storage.events.{EventHasOtherParticipants, EventNotFound}
+import service.storage.events.EventNotFound
 import service.storage.users.UserStorageService
+import service.storage.utils.Storage
 
-trait AdminStorageService {
+trait AdminStorageService extends Storage {
 
-    val collection = getCollection()
+    val collection = getCollection("events")
+
+    def adminList(): DBCursor = {
+        return collection.find(MongoDBObject(), EVENT_LIST_FIELDS)
+    }
 
     def adminCreate(event: AdminEvent): Unit = {
         collection.insert(new DBAdminEvent(event))
     }
 
-    def adminList(): DBCursor = {
-        return collection.find(MongoDBObject(), MongoDBObject("comments" -> 0, "participants" -> 0))
+    def adminRead(event_id: String): DBObject = {
+        val query = MongoDBObject("_id" -> event_id)
+        val doc = collection.findOne(query, EVENT_DETAILS_FIELDS)
+        if (doc != null) return doc
+        throw new EventNotFound
     }
 
-    def adminRead(event_id: String): DBObject = {
-        if (!isEvent(event_id)) throw new EventNotFound
-        return collection.findOne(MongoDBObject("_id" -> event_id))
+    def adminDelete(event_id: String): Unit = {
+        if (collection.findAndRemove(MongoDBObject("_id" -> event_id)) == null) throw new EventNotFound
     }
 
     def adminUpdate(event_id: String, event: AdminEvent): DBObject = {
-        if (!isEvent(event_id)) throw new EventNotFound
-
         val update = $set(
             "headline" -> event.headline,
             "description" -> event.description,
@@ -40,34 +43,13 @@ trait AdminStorageService {
             "user" -> UserStorageService.publicUserToDocument(event.user)
         )
 
-        return collection.findAndModify(MongoDBObject("_id" -> event_id), null, null, false, update, true, false)
-    }
-
-    def adminDelete(event_id: String): Unit = {
-        if (!isEvent(event_id)) throw new EventNotFound
-        val doc = collection.findAndRemove(MongoDBObject("_id" -> event_id))
-        if (doc == null) throw new EventHasOtherParticipants
-    }
-
-    // Helpers =======================================================================================================//
-
-    private def isEvent(id: String): Boolean = {
-        return if (collection.find(MongoDBObject("_id" -> id)).limit(1).size() == 0) false else true
-    }
-
-    private def getCollection(): DBCollection = {
-        val uri = MongoClientURI(System.getenv("MONGOLAB_URI"))
-        val mongoClient = MongoClient(uri)
-        val db = mongoClient(uri.database.get)
-        db.getCollection("events")
+        val query = MongoDBObject("_id" -> event_id)
+        val doc = collection.findAndModify(query, EVENT_DETAILS_FIELDS, null, false, update, true, false)
+        if (doc != null) return doc
+        throw new EventNotFound
     }
 
     // DB document objects ===========================================================================================//
-
-    class DBGeoPoint(x: Double, y: Double) extends MongoDBObject {
-        put("type", "Point")
-        put("coordinates", GeoCoords(y, x))
-    }
 
     private class DBAdminEvent(event: AdminEvent) extends BasicDBObject {
         put("_id", java.util.UUID.randomUUID.toString)
