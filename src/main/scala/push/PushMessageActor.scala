@@ -5,6 +5,7 @@ import java.util.concurrent.Executors
 import akka.actor.{Actor, ActorLogging}
 import service.aws.SNSClient
 import service.storage.events.EventStorageService
+import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,18 +23,19 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
     override def receive: Receive = {
         case NewParticipant(event_id) =>
             log.info(f"New participant for event: $event_id")
-            notifyParticipants(event_id, "New participant")
+            notifyParticipants(event_id, "new_participant")
         case NewComment(event_id) =>
             log.info(f"New comment for event: $event_id")
-            notifyParticipants(event_id, "New comment")
+            notifyParticipants(event_id, "new_comment")
         case EventChanged(event_id) =>
             log.info(f"Event $event_id changed")
-            notifyParticipants(event_id, "Event changed")
+            notifyParticipants(event_id, "event_updated")
     }
 
     private def notifyParticipants(event_id: String, msg: String): Unit = {
         val f = Future {
-            for (token <- EventStorageService.getEventDevices(event_id)) push(token, msg)
+            val result: EventStorageService.GroupResult = EventStorageService.getEventDevices(event_id)
+            for (token <- result.res1) push(token, PushMessage(event_id, result.res2, msg).toJson.toString())
         }
 
         f onFailure {

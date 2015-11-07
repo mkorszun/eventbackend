@@ -115,15 +115,15 @@ object EventStorageService extends Storage {
         collection.update(MongoDBObject("participants.id" -> id), update, false, true)
     }
 
-    def getEventDevices(id: String): Array[String] = {
+    def getEventDevices(id: String): GroupResult = {
         val steps: java.util.List[DBObject] = aggregationSteps(Array(
             MongoDBObject("$match" -> MongoDBObject("_id" -> id)),
             MongoDBObject("$project" -> MongoDBObject("a" -> "$participants.devices", "b" -> "$headline")),
             MongoDBObject("$unwind" -> "$a"),
             MongoDBObject("$unwind" -> "$a"),
-            MongoDBObject("$group" -> new Group("$a")))
+            MongoDBObject("$group" -> new Group("$a", "$b")))
         )
-        return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)))
+        return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)), "_id")
     }
 
     // Helpers =======================================================================================================//

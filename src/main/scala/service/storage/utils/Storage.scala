@@ -1,5 +1,6 @@
 package service.storage.utils
 
+import com.mongodb
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.query.dsl.GeoCoords
@@ -26,21 +27,28 @@ trait Storage {
     }
 
     def toArray(results: Cursor): Array[String] = {
-        var res: Array[String] = Array()
+        return toArray(results, "_id").res1
+    }
+
+    def toArray(results: Cursor, field: String): GroupResult = {
+        var res1: Array[String] = Array()
+        var res2: String = ""
 
         if (results.hasNext) {
-            val value: AnyRef = results.next().get("aggregated")
-            res = toArray(value.asInstanceOf[BasicDBList])
+            val next: mongodb.DBObject = results.next()
+            val value: AnyRef = next.get("aggregated")
+            res1 = toArray(value.asInstanceOf[BasicDBList])
+            res2 = next.getAs[String]("_id").get
         }
 
         results.close()
-        return res
+        return GroupResult(res1, res2)
     }
 
     def toArray(obj: BasicDBList): Array[String] = (obj.toList map (_.toString)).toArray
 
-    class Group(field: String) extends BasicDBObject {
-        put("_id", "all")
+    class Group(field: String, field1: String) extends BasicDBObject {
+        put("_id", field1)
         put("aggregated", MongoDBObject("$addToSet" -> field))
     }
 
@@ -49,4 +57,5 @@ trait Storage {
         put("coordinates", GeoCoords(y, x))
     }
 
+    case class GroupResult(res1: Array[String], res2: String)
 }

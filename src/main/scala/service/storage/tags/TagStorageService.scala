@@ -23,7 +23,7 @@ object TagStorageService extends Storage {
         }
 
         steps.add(MongoDBObject("$unwind" -> "$tags"))
-        steps.add(MongoDBObject("$group" -> new Group("$tags")))
+        steps.add(MongoDBObject("$group" -> new Group("$tags", "all")))
 
         return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)))
     }
