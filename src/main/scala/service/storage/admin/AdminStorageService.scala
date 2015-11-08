@@ -13,7 +13,7 @@ trait AdminStorageService extends Storage {
     val collection = getCollection("events")
 
     def adminList(): DBCursor = {
-        return collection.find(MongoDBObject(), EVENT_LIST_FIELDS)
+        return collection.find(MongoDBObject(), EVENT_LIST_ADMIN_FIELDS)
     }
 
     def adminCreate(event: AdminEvent): Unit = {
@@ -22,7 +22,7 @@ trait AdminStorageService extends Storage {
 
     def adminRead(event_id: String): DBObject = {
         val query = MongoDBObject("_id" -> event_id)
-        val doc = collection.findOne(query, EVENT_DETAILS_FIELDS)
+        val doc = collection.findOne(query, EVENT_DETAILS_ADMIN_FIELDS)
         if (doc != null) return doc
         throw new EventNotFound
     }
@@ -44,7 +44,7 @@ trait AdminStorageService extends Storage {
         )
 
         val query = MongoDBObject("_id" -> event_id)
-        val doc = collection.findAndModify(query, EVENT_DETAILS_FIELDS, null, false, update, true, false)
+        val doc = collection.findAndModify(query, EVENT_DETAILS_ADMIN_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
         throw new EventNotFound
     }
