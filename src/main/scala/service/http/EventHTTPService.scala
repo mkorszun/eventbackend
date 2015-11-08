@@ -93,7 +93,7 @@ trait EventHTTPService extends HttpService with Config {
                             complete {
                                 toJson {
                                     val res = eventService.addComment(id, user, m.msg)
-                                    pushActor ! NewComment(id)
+                                    pushActor ! NewComment(user, id)
                                     res
                                 }
                             }
@@ -101,7 +101,7 @@ trait EventHTTPService extends HttpService with Config {
                             complete {
                                 toJson {
                                     val res = eventService.addComment(id, user, m)
-                                    pushActor ! NewComment(id)
+                                    pushActor ! NewComment(user, id)
                                     res
                                 }
                             }
@@ -161,7 +161,7 @@ trait EventHTTPService extends HttpService with Config {
             complete {
                 toJson {
                     val res = eventService.addParticipant(id, user)
-                    pushActor ! NewParticipant(id)
+                    pushActor ! NewParticipant(user, id)
                     res
                 }
             }
@@ -278,7 +278,7 @@ trait EventHTTPService extends HttpService with Config {
                     complete {
                         toJson {
                             val res = eventService.updateEvent(event_id, user, event)
-                            pushActor ! EventChanged(event_id)
+                            pushActor ! EventChanged(user, event_id)
                             res
                         }
                     }

@@ -3,17 +3,18 @@ package push
 import java.util.concurrent.Executors
 
 import akka.actor.{Actor, ActorLogging}
+import model.user.User
 import service.aws.SNSClient
 import service.storage.events.EventStorageService
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class NewParticipant(event_id: String)
+case class NewParticipant(user: User, event_id: String)
 
-case class NewComment(event_id: String)
+case class NewComment(user: User, event_id: String)
 
-case class EventChanged(event_id: String)
+case class EventChanged(user: User, event_id: String)
 
 class PushMessageActor extends Actor with ActorLogging with SNSClient {
 
@@ -21,21 +22,24 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
     implicit val executionContext = ExecutionContext.fromExecutorService(executorService)
 
     override def receive: Receive = {
-        case NewParticipant(event_id) =>
+        case NewParticipant(user, event_id) =>
             log.info(f"New participant for event: $event_id")
-            notifyParticipants(event_id, "new_participant")
-        case NewComment(event_id) =>
+            notifyParticipants(user, event_id, "new_participant")
+        case NewComment(user, event_id) =>
             log.info(f"New comment for event: $event_id")
-            notifyParticipants(event_id, "new_comment")
-        case EventChanged(event_id) =>
+            notifyParticipants(user, event_id, "new_comment")
+        case EventChanged(user, event_id) =>
             log.info(f"Event $event_id changed")
-            notifyParticipants(event_id, "event_updated")
+            notifyParticipants(user, event_id, "event_updated")
     }
 
-    private def notifyParticipants(event_id: String, msg: String): Unit = {
+    private def notifyParticipants(user: User, event_id: String, msg: String): Unit = {
         val f = Future {
             val result: EventStorageService.GroupResult = EventStorageService.getEventDevices(event_id)
-            for (token <- result.res1) push(token, PushMessage(event_id, result.res2, msg).toJson.toString())
+            for (token <- result.res1 diff user.devices.get) {
+                val payload = PushMessage(event_id, result.res2, msg)
+                push(token, payload.toJson.toString())
+            }
         }
 
         f onFailure {
