@@ -17,6 +17,10 @@ class JsonDirective extends RouteDirectives {
     def apply(result: Unit): APIResponse = {
         APIResponse("OK")
     }
+
+    def apply(): APIResponse = {
+        APIResponse("OK")
+    }
 }
 
 class JsonEventDirective extends JsonDirective

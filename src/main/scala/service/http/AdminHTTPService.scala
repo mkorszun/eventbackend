@@ -3,7 +3,7 @@ package service.http
 import javax.ws.rs.Path
 
 import _root_.directives.JsonUserDirective
-import com.wordnik.swagger.annotations.{Api, ApiImplicitParam, ApiImplicitParams, ApiOperation}
+import com.wordnik.swagger.annotations._
 import config.Config
 import model.APIResponse
 import model.admin.AdminEvent
@@ -30,8 +30,20 @@ trait AdminHTTPService extends HttpService with Config with AdminStorageService 
                     } ~ path(Segment) { id =>
                         readEvent(id) ~ updateEvent(id) ~ deleteEvent(id)
                     }
+                } ~ pathPrefix("auth") {
+                    auth
                 }
             }
+        }
+    }
+
+    @Path("/auth")
+    @ApiOperation(
+        httpMethod = "HEAD",
+        value = "Auth admin")
+    def auth: Route = {
+        post {
+            complete("OK")
         }
     }
 
