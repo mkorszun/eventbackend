@@ -39,7 +39,7 @@ trait AdminHTTPService extends HttpService with Config with AdminStorageService 
 
     @Path("/auth")
     @ApiOperation(
-        httpMethod = "HEAD",
+        httpMethod = "POST",
         value = "Auth admin")
     def auth: Route = {
         post {
