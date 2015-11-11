@@ -140,9 +140,9 @@ object UserStorageService extends Storage {
         PublicUser(
             Option(doc.get("_id").toString),
             doc.get("first_name").toString,
-            doc.get("last_name").toString,
+            Option(doc.get("last_name").toString),
             Option(doc.get("photo_url").toString),
-            doc.get("bio").toString,
+            Option(doc.get("bio").toString),
             Option(doc.get("telephone").asInstanceOf[String]),
             Option(doc.get("www").asInstanceOf[String]),
             Option(doc.get("email").asInstanceOf[String])
