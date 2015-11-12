@@ -4,8 +4,8 @@ import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
 import com.mongodb.{DBCursor, DBObject}
 import model.admin.AdminEvent
-import model.user.PublicUser
 import service.storage.events.EventNotFound
+import service.storage.users.UserStorageService
 import service.storage.utils.Storage
 
 trait AdminStorageService extends Storage {
@@ -40,7 +40,10 @@ trait AdminStorageService extends Storage {
             "tags" -> event.tags,
             "distance" -> event.distance,
             "pace" -> event.pace,
-            "user" -> new DBAdminEventUser(event.user)
+            "www" -> event.www,
+            "user.first_name" -> event.user.first_name,
+            "user.www" -> event.user.www,
+            "user.email" -> event.user.email
         )
 
         val query = MongoDBObject("_id" -> event_id)
@@ -53,7 +56,7 @@ trait AdminStorageService extends Storage {
 
     private class DBAdminEvent(event: AdminEvent) extends BasicDBObject {
         put("_id", java.util.UUID.randomUUID.toString)
-        put("user", new DBAdminEventUser(event.user))
+        put("user", UserStorageService.publicUserToDocument(event.user))
         put("timestamp", event.timestamp)
         put("headline", event.headline)
         put("description", event.description)
@@ -67,16 +70,6 @@ trait AdminStorageService extends Storage {
         put("spots", 0)
         put("admin", true)
         put("www", event.www)
-    }
-
-    private class DBAdminEventUser(user: PublicUser) extends BasicDBObject {
-        put("first_name", user.first_name)
-        put("last_name", user.last_name)
-        put("photo_url", user.photo_url)
-        put("bio", user.bio)
-        put("telephone", user.telephone)
-        put("www", user.www)
-        put("email", user.email)
     }
 
     //================================================================================================================//
