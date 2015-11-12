@@ -94,7 +94,8 @@ object UserStorageService extends Storage {
             "bio" -> user.bio,
             "telephone" -> user.telephone,
             "www" -> user.www,
-            "email" -> user.email
+            "email" -> user.email,
+            "devices" -> user.devices
         )
     }
 
