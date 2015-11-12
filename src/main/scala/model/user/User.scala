@@ -12,4 +12,7 @@ case class User(
     telephone: Option[String],
     www: Option[String],
     email: Option[String],
-    devices: Option[Array[String]])
+    devices: Option[Array[String]]) {
+
+    def fullName: String = f"$first_name $last_name"
+}

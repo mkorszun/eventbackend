@@ -37,7 +37,8 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
         val f = Future {
             val result: EventStorageService.GroupResult = EventStorageService.getEventDevices(event_id)
             for (token <- result.res1 diff user.devices.get) {
-                val payload = PushMessageWrapper2(PushMessageWrapper1("1", PushMessage(event_id, result.res2, msg)))
+                val message: PushMessage = PushMessage(event_id, result.res2, msg, user.fullName)
+                val payload = PushMessageWrapper2(PushMessageWrapper1("1", message))
                 push(token, payload.toJson.toString())
             }
         }

@@ -2,14 +2,14 @@ package push
 
 import spray.json.DefaultJsonProtocol
 
-case class PushMessage(event_id: String, event_name: String, msg_type: String)
+case class PushMessage(event_id: String, event_name: String, msg_type: String, user_name: String)
 
 case class PushMessageWrapper1(content_available: String, payload: PushMessage)
 
 case class PushMessageWrapper2(aps: PushMessageWrapper1)
 
 object PushMessage extends DefaultJsonProtocol {
-    implicit val pushMessageFormat = jsonFormat3(PushMessage.apply)
+    implicit val pushMessageFormat = jsonFormat4(PushMessage.apply)
 }
 
 object PushMessageWrapper1 extends DefaultJsonProtocol {
