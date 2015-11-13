@@ -13,6 +13,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class NewParticipant(user: User, event_id: String)
 
+case class LeavingParticipant(user: User, event_id: String)
+
 case class NewComment(user: User, event_id: String)
 
 case class EventChanged(user: User, event_id: String)
@@ -32,6 +34,9 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
         case EventChanged(user, event_id) =>
             log.info(f"Event $event_id changed")
             notifyParticipants(user, event_id, "event_updated")
+        case LeavingParticipant(user, event_id) =>
+            log.info(f"Leaving participant for event: $event_id")
+            notifyParticipants(user, event_id, "leaving_participant")
     }
 
     private def notifyParticipants(user: User, event_id: String, msg_type: String): Unit = {

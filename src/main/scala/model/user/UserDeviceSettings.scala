@@ -8,19 +8,22 @@ import com.wordnik.swagger.annotations.ApiModel
 case class UserDeviceSettings(
     push_on_new_comment: Boolean = true,
     push_on_new_participant: Boolean = true,
-    push_on_update: Boolean = true)
+    push_on_update: Boolean = true,
+    push_on_leaving_participant: Boolean = true)
 
 object UserDeviceSettings {
 
     private val push_on_new_comment: String = "push_on_new_comment"
     private val push_on_new_participant: String = "push_on_new_participant"
+    private val push_on_leaving_participant: String = "push_on_leaving_participant"
     private val push_on_update: String = "push_on_update"
 
     def fromDocument(document: DBObject): UserDeviceSettings = {
         UserDeviceSettings(
             document.get(push_on_new_comment).asInstanceOf[Boolean],
             document.get(push_on_new_participant).asInstanceOf[Boolean],
-            document.get(push_on_update).asInstanceOf[Boolean]
+            document.get(push_on_update).asInstanceOf[Boolean],
+            document.get(push_on_leaving_participant).asInstanceOf[Boolean]
         )
     }
 
@@ -28,7 +31,8 @@ object UserDeviceSettings {
         MongoDBObject(
             push_on_new_comment -> obj.push_on_new_comment,
             push_on_new_participant -> obj.push_on_new_participant,
-            push_on_update -> obj.push_on_update
+            push_on_update -> obj.push_on_update,
+            push_on_leaving_participant -> obj.push_on_leaving_participant
         )
     }
 }

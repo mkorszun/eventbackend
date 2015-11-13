@@ -125,6 +125,7 @@ object UserStorageService extends Storage {
         case "new_participant" => "settings.push_on_new_participant"
         case "new_comment" => "settings.push_on_new_comment"
         case "event_updated" => "settings.push_on_update"
+        case "leaving_participant" => "settings.push_on_leaving_participant"
     }
 
     //================================================================================================================//

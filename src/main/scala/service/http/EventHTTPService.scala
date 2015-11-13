@@ -9,7 +9,7 @@ import config.Config
 import model.APIResponse
 import model.event.{Comment, Event}
 import model.user.User
-import push.{EventChanged, NewComment, NewParticipant, PushMessageActor}
+import push._
 import service.storage.events.EventStorageService
 import spray.http.CacheDirectives.`max-age`
 import spray.http.HttpHeaders.`Cache-Control`
@@ -132,7 +132,9 @@ trait EventHTTPService extends HttpService with Config {
         delete {
             complete {
                 toJson {
-                    eventService.removeParticipant(id, user)
+                    val res = eventService.removeParticipant(id, user)
+                    pushActor ! LeavingParticipant(user, id)
+                    res
                 }
             }
         }
