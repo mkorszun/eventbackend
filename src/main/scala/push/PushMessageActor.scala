@@ -34,11 +34,11 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
             notifyParticipants(user, event_id, "event_updated")
     }
 
-    private def notifyParticipants(user: User, event_id: String, msg: String): Unit = {
+    private def notifyParticipants(user: User, event_id: String, msg_type: String): Unit = {
         val f = Future {
             val result: EventStorageService.GroupResult = EventStorageService.getEventParticipants(event_id)
-            for (token <- UserStorageService.getUserDevices(result.res1) diff user.devices.get) {
-                val message: PushMessage = PushMessage(event_id, result.res2, msg, user.fullName)
+            for (token <- UserStorageService.getUserDevices(result.res1, msg_type) diff user.devices.get) {
+                val message: PushMessage = PushMessage(event_id, result.res2, msg_type, user.fullName)
                 val payload = PushMessageWrapper2(PushMessageWrapper1("1", message))
                 push(token, payload.toJson.toString())
             }
@@ -46,7 +46,7 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
 
         f onFailure {
             case e =>
-                log.error(e, f"Failed to send push message: $msg for event: $event_id")
+                log.error(e, f"Failed to send push message: $msg_type for event: $event_id")
         }
     }
 }

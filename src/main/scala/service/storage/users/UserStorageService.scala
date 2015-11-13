@@ -81,9 +81,9 @@ object UserStorageService extends Storage {
         toArray(devices.asInstanceOf[BasicDBList])
     }
 
-    def getUserDevices(ids: Array[String]): Array[String] = {
+    def getUserDevices(ids: Array[String], setting_type: String): Array[String] = {
         val steps: java.util.List[DBObject] = aggregationSteps(Array(
-            MongoDBObject("$match" -> MongoDBObject("_id" -> MongoDBObject("$in" -> ids))),
+            MongoDBObject("$match" -> MongoDBObject("_id" -> MongoDBObject("$in" -> ids), getSetting(setting_type) -> true)),
             MongoDBObject("$project" -> MongoDBObject("a" -> "$devices")),
             MongoDBObject("$unwind" -> "$a"),
             MongoDBObject("$group" -> new Group("$a", "all")))
@@ -119,6 +119,12 @@ object UserStorageService extends Storage {
             doc.get("_id").toString,
             doc.get("token").toString
         )
+    }
+
+    def getSetting(msg: String): String = msg match {
+        case "new_participant" => "settings.push_on_new_participant"
+        case "new_comment" => "settings.push_on_new_comment"
+        case "event_updated" => "settings.push_on_update"
     }
 
     //================================================================================================================//
