@@ -101,7 +101,7 @@ object EventStorageService extends Storage {
     }
 
     def updateOwnerData(id: String, user: PublicUser): Unit = {
-        val update = $set("user" -> UserStorageService.publicUserToDocument(user))
+        val update = $set("user" -> PublicUser.toDocument(user))
         collection.update(MongoDBObject("user.id" -> id), update, false, true)
     }
 
@@ -120,6 +120,16 @@ object EventStorageService extends Storage {
             MongoDBObject("$match" -> MongoDBObject("_id" -> id)),
             MongoDBObject("$project" -> MongoDBObject("a" -> "$participants.devices", "b" -> "$headline")),
             MongoDBObject("$unwind" -> "$a"),
+            MongoDBObject("$unwind" -> "$a"),
+            MongoDBObject("$group" -> new Group("$a", "$b")))
+        )
+        return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)), "_id")
+    }
+
+    def getEventParticipants(id: String): GroupResult = {
+        val steps: java.util.List[DBObject] = aggregationSteps(Array(
+            MongoDBObject("$match" -> MongoDBObject("_id" -> id)),
+            MongoDBObject("$project" -> MongoDBObject("a" -> "$participants.id", "b" -> "$headline")),
             MongoDBObject("$unwind" -> "$a"),
             MongoDBObject("$group" -> new Group("$a", "$b")))
         )

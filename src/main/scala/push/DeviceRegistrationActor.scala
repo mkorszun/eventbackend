@@ -6,7 +6,6 @@ import akka.actor.{Actor, ActorLogging}
 import com.amazonaws.services.sns.model.CreatePlatformEndpointRequest
 import model.user.UserDevice
 import service.aws.SNSClient
-import service.storage.events.EventStorageService
 import service.storage.users.UserStorageService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,10 +28,7 @@ class DeviceRegistrationActor extends Actor with ActorLogging with SNSClient {
 
                 val arn = client.createPlatformEndpoint(request).getEndpointArn
                 log.info(f"SNS platform endpoint created for user $user_id: $arn")
-
-                val devices: Array[String] = UserStorageService.updateUserDevice(user_id, arn)
-                EventStorageService.updateParticipantsDevices(user_id, devices)
-                log.info(f"Updated all participations with new device list for user $user_id")
+                UserStorageService.updateUserDevice(user_id, arn)
             }
 
             f onFailure {

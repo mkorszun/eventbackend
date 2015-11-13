@@ -6,6 +6,7 @@ import akka.actor.{Actor, ActorLogging}
 import model.user.User
 import service.aws.SNSClient
 import service.storage.events.EventStorageService
+import service.storage.users.UserStorageService
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,8 +36,8 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
 
     private def notifyParticipants(user: User, event_id: String, msg: String): Unit = {
         val f = Future {
-            val result: EventStorageService.GroupResult = EventStorageService.getEventDevices(event_id)
-            for (token <- result.res1 diff user.devices.get) {
+            val result: EventStorageService.GroupResult = EventStorageService.getEventParticipants(event_id)
+            for (token <- UserStorageService.getUserDevices(result.res1) diff user.devices.get) {
                 val message: PushMessage = PushMessage(event_id, result.res2, msg, user.fullName)
                 val payload = PushMessageWrapper2(PushMessageWrapper1("1", message))
                 push(token, payload.toJson.toString())

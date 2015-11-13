@@ -6,7 +6,7 @@ import com.mongodb.DBObject
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBObject}
 import model.token.Token
-import model.user.{PublicUser, User}
+import model.user.{PublicUser, User, UserDeviceSettings}
 import service.storage.events.EventStorageService
 import service.storage.utils.Storage
 
@@ -36,19 +36,20 @@ object UserStorageService extends Storage {
             "bio" -> user.bio,
             "telephone" -> user.telephone,
             "www" -> user.www,
-            "email" -> user.email
+            "email" -> user.email,
+            "settings" -> UserDeviceSettings.toDocument(user.settings.get)
         )
 
         val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
         val doc = collection.findAndModify(query, null, null, false, update, true, false)
-        if (doc != null) Option(publicUserFromDocument(doc)) else None
+        if (doc != null) Option(PublicUser.fromDocument(doc)) else None
     }
 
     def updatePhoto(id: String, token: String, photo_url: String): Option[PublicUser] = {
         val update = $set("photo_url" -> photo_url)
         val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
         val doc = collection.findAndModify(query, null, null, false, update, true, false)
-        if (doc != null) Option(publicUserFromDocument(doc)) else None
+        if (doc != null) Option(PublicUser.fromDocument(doc)) else None
     }
 
     def readPrivateUserData(token: String): Option[User] = {
@@ -58,7 +59,7 @@ object UserStorageService extends Storage {
 
     def readPublicUserData(id: String): Option[PublicUser] = {
         val doc = collection.findOne(MongoDBObject("_id" -> id))
-        if (doc != null) Option(publicUserFromDocument(doc)) else None
+        if (doc != null) Option(PublicUser.fromDocument(doc)) else None
     }
 
     def updateUserData(id: String, user: PublicUser) = Future {
@@ -78,6 +79,16 @@ object UserStorageService extends Storage {
         val user = collection.findOne(query)
         val devices: AnyRef = user.get("devices")
         toArray(devices.asInstanceOf[BasicDBList])
+    }
+
+    def getUserDevices(ids: Array[String]): Array[String] = {
+        val steps: java.util.List[DBObject] = aggregationSteps(Array(
+            MongoDBObject("$match" -> MongoDBObject("_id" -> MongoDBObject("$in" -> ids))),
+            MongoDBObject("$project" -> MongoDBObject("a" -> "$devices")),
+            MongoDBObject("$unwind" -> "$a"),
+            MongoDBObject("$group" -> new Group("$a", "all")))
+        )
+        return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)))
     }
 
     // DB document objects ===========================================================================================//
@@ -134,32 +145,6 @@ object UserStorageService extends Storage {
             Option(doc.get("www").asInstanceOf[String]),
             Option(doc.get("email").asInstanceOf[String]),
             Option(toArray(doc.get("devices").asInstanceOf[BasicDBList]))
-        )
-    }
-
-    def publicUserFromDocument(doc: DBObject): PublicUser = {
-        PublicUser(
-            Option(doc.get("_id").toString),
-            doc.get("first_name").toString,
-            Option(doc.get("last_name").toString),
-            Option(doc.get("photo_url").toString),
-            Option(doc.get("bio").toString),
-            Option(doc.get("telephone").asInstanceOf[String]),
-            Option(doc.get("www").asInstanceOf[String]),
-            Option(doc.get("email").asInstanceOf[String])
-        )
-    }
-
-    def publicUserToDocument(user: PublicUser): DBObject = {
-        MongoDBObject(
-            "id" -> user.id,
-            "first_name" -> user.first_name,
-            "last_name" -> user.last_name,
-            "photo_url" -> user.photo_url,
-            "bio" -> user.bio,
-            "telephone" -> user.telephone,
-            "www" -> user.www,
-            "email" -> user.email
         )
     }
 

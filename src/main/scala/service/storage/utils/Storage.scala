@@ -59,6 +59,8 @@ trait Storage {
         put("coordinates", GeoCoords(y, x))
     }
 
-    case class GroupResult(res1: Array[String], res2: String)
+    case class GroupResult(res1: Array[String], res2: String) {
+        override def toString: String = res1.mkString(",")
+    }
 
 }

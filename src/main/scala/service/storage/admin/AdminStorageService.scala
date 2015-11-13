@@ -4,6 +4,7 @@ import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
 import com.mongodb.{DBCursor, DBObject}
 import model.admin.AdminEvent
+import model.user.PublicUser
 import service.storage.events.EventNotFound
 import service.storage.users.UserStorageService
 import service.storage.utils.Storage
@@ -56,7 +57,7 @@ trait AdminStorageService extends Storage {
 
     private class DBAdminEvent(event: AdminEvent) extends BasicDBObject {
         put("_id", java.util.UUID.randomUUID.toString)
-        put("user", UserStorageService.publicUserToDocument(event.user))
+        put("user", PublicUser.toDocument(event.user))
         put("timestamp", event.timestamp)
         put("headline", event.headline)
         put("description", event.description)
