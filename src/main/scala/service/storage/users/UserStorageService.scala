@@ -23,7 +23,7 @@ object UserStorageService extends Storage {
 
     def createUser(user: User): Token = {
         val query = MongoDBObject("provider_id" -> user.provider_id, "provider" -> user.provider)
-        val setOnInsert = MongoDBObject("$setOnInsert" -> userToDocument(user))
+        val setOnInsert = MongoDBObject("$setOnInsert" -> User.toDocument(user))
         val doc = collection.findAndModify(query, null, null, false, setOnInsert, true, true)
         return tokenFromDocument(doc)
     }
@@ -92,23 +92,6 @@ object UserStorageService extends Storage {
     }
 
     // DB document objects ===========================================================================================//
-
-    def userToDocument(user: User): DBObject = {
-        MongoDBObject(
-            "_id" -> user.id,
-            "provider_id" -> user.provider_id,
-            "provider" -> user.provider,
-            "token" -> user.token,
-            "first_name" -> user.first_name,
-            "last_name" -> user.last_name,
-            "photo_url" -> user.photo_url,
-            "bio" -> user.bio,
-            "telephone" -> user.telephone,
-            "www" -> user.www,
-            "email" -> user.email,
-            "devices" -> user.devices
-        )
-    }
 
     def userToPublicDocument(user: User): DBObject = {
         MongoDBObject(
