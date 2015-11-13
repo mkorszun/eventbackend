@@ -54,7 +54,7 @@ object UserStorageService extends Storage {
 
     def readPrivateUserData(token: String): Option[User] = {
         val doc = collection.findOne(MongoDBObject("token" -> token))
-        if (doc != null) Option(userFromDocument(doc)) else None
+        if (doc != null) Option(User.fromDocument(doc)) else None
     }
 
     def readPublicUserData(id: String): Option[PublicUser] = {
@@ -111,23 +111,6 @@ object UserStorageService extends Storage {
             "id" -> user.id,
             "photo_url" -> user.photo_url,
             "devices" -> user.devices
-        )
-    }
-
-    def userFromDocument(doc: DBObject): User = {
-        User(
-            doc.get("_id").toString,
-            doc.get("provider_id").toString,
-            doc.get("provider").toString,
-            doc.get("token").toString,
-            doc.get("first_name").toString,
-            doc.get("last_name").toString,
-            doc.get("photo_url").toString,
-            doc.get("bio").toString,
-            Option(doc.get("telephone").asInstanceOf[String]),
-            Option(doc.get("www").asInstanceOf[String]),
-            Option(doc.get("email").asInstanceOf[String]),
-            Option(toArray(doc.get("devices").asInstanceOf[BasicDBList]))
         )
     }
 

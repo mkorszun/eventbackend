@@ -1,7 +1,9 @@
 package model.user
 
 import com.mongodb.DBObject
+import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
+import service.storage.users.UserStorageService._
 
 case class User(
     id: String,
@@ -36,6 +38,23 @@ object User {
             "email" -> user.email,
             "devices" -> user.devices,
             "settings" -> UserDeviceSettings.toDocument(new UserDeviceSettings(true, true, true))
+        )
+    }
+
+    def fromDocument(doc: DBObject): User = {
+        User(
+            doc.get("_id").toString,
+            doc.get("provider_id").toString,
+            doc.get("provider").toString,
+            doc.get("token").toString,
+            doc.get("first_name").toString,
+            doc.get("last_name").toString,
+            doc.get("photo_url").toString,
+            doc.get("bio").toString,
+            Option(doc.get("telephone").asInstanceOf[String]),
+            Option(doc.get("www").asInstanceOf[String]),
+            Option(doc.get("email").asInstanceOf[String]),
+            Option(toArray(doc.get("devices").asInstanceOf[BasicDBList]))
         )
     }
 }
