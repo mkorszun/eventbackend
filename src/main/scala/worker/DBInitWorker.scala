@@ -12,13 +12,7 @@ object DBInitWorker {
         MongoDBObject("participants.id" -> 1, "timestamp" -> 1),
         MongoDBObject("loc" -> "2dsphere", "timestamp" -> 1, "tags" -> 1),
         MongoDBObject("participants.id" -> 1, "user.id" -> 1),
-        MongoDBObject("_id" -> 1, "user.id" -> 1),
-        MongoDBObject("loc" -> "2dsphere"),
-        MongoDBObject("user.id" -> 1),
-        MongoDBObject("participants.id" -> 1),
-        MongoDBObject("tags" -> 1),
-        MongoDBObject("timestamp" -> 1)
-
+        MongoDBObject("_id" -> 1, "user.id" -> 1)
     )
 
     val user_indexes: Array[Imports.DBObject] = Array(
