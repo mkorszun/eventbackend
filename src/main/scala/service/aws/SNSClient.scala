@@ -3,7 +3,7 @@ package service.aws
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.sns.AmazonSNSClient
-import com.amazonaws.services.sns.model.PublishRequest
+import com.amazonaws.services.sns.model.{EndpointDisabledException, PublishRequest}
 import config.Config
 
 trait SNSClient extends Config {
@@ -20,7 +20,12 @@ trait SNSClient extends Config {
         case "ios" => APP_IOS_ARN
     }
 
-    def push(arn: String, msg: String): Unit = {
-        client.publish(new PublishRequest().withTargetArn(arn).withMessage(msg))
+    def push(arn: String, msg: String): Boolean = {
+        try {
+            client.publish(new PublishRequest().withTargetArn(arn).withMessage(msg))
+            return true
+        } catch {
+            case e: EndpointDisabledException => return false
+        }
     }
 }

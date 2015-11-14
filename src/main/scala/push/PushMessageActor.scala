@@ -2,8 +2,7 @@ package push
 
 import java.util.concurrent.Executors
 
-import akka.actor.{Actor, ActorLogging}
-import com.amazonaws.services.sns.model.EndpointDisabledException
+import akka.actor.{Actor, ActorLogging, Props}
 import model.user.User
 import service.aws.SNSClient
 import service.storage.events.EventStorageService
@@ -20,13 +19,9 @@ case class NewComment(user: User, event_id: String)
 
 case class EventChanged(user: User, event_id: String)
 
-object PushType extends Enumeration {
-    type PushType = Value
-    val new_participant, new_comment, event_updated, leaving_participant = Value
-}
-
 class PushMessageActor extends Actor with ActorLogging with SNSClient {
 
+    val deviceActor = context.actorOf(Props[DeviceRegistrationActor])
     val executorService = Executors.newFixedThreadPool(PUSH_EXECUTOR_SIZE)
     implicit val executionContext = ExecutionContext.fromExecutorService(executorService)
 
@@ -52,14 +47,7 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
                 val alert_msg: String = alert(msg_type, result.res2, user.fullName)
                 val message: PushMessage = PushMessage(event_id, result.res2, msg_type.toString, user.fullName)
                 val payload = PushMessageWrapper2(PushMessageWrapper1(1, alert_msg, "default"), message)
-
-                try {
-                    push(token, payload.toJson.toString())
-                } catch {
-                    case e: EndpointDisabledException =>
-                        log.info(f"ARN $token disabled. Removing.")
-                        UserStorageService.removeDevice(token)
-                }
+                if (!push(token, payload.toJson.toString())) deviceActor ! UnregisterDevice(null, token)
             }
         }
 

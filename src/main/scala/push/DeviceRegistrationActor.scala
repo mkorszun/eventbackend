@@ -12,6 +12,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class RegisterDevice(user_id: String, device: UserDevice)
 
+case class UnregisterDevice(user_id: String, arn: String)
+
 class DeviceRegistrationActor extends Actor with ActorLogging with SNSClient {
 
     val executorService = Executors.newFixedThreadPool(REGISTRATION_EXECUTOR_SIZE)
@@ -34,6 +36,16 @@ class DeviceRegistrationActor extends Actor with ActorLogging with SNSClient {
             f onFailure {
                 case e =>
                     log.error(e, f"Failed to register new device for user $user_id: $device")
+            }
+        case UnregisterDevice(user_id, arn) =>
+            val f = Future {
+                log.info(f"Removing device $arn for user $user_id")
+                UserStorageService.removeDevice(arn)
+            }
+
+            f onFailure {
+                case e =>
+                    log.error(e, f"Failed to remove device $arn for user $user_id")
             }
     }
 }
