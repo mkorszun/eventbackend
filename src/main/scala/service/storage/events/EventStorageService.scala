@@ -81,7 +81,7 @@ object EventStorageService extends Storage {
             "pace" -> event.pace
         )
 
-        val query = MongoDBObject("_id" -> event_id)
+        val query = MongoDBObject("_id" -> event_id, "user.id" -> user.id)
         val doc = collection.findAndModify(query, EVENT_DETAILS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
         throw new EventNotFound
