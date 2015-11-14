@@ -85,12 +85,19 @@ object UserStorageService extends Storage {
 
     def getUserDevices(ids: Array[String], setting_type: PushType): Array[String] = {
         val steps: java.util.List[DBObject] = aggregationSteps(Array(
-            MongoDBObject("$match" -> MongoDBObject("_id" -> MongoDBObject("$in" -> ids), getSetting(setting_type) -> true)),
+            MongoDBObject(
+                "$match" -> MongoDBObject("_id" -> MongoDBObject("$in" -> ids), getSetting(setting_type) -> true)),
             MongoDBObject("$project" -> MongoDBObject("a" -> "$devices")),
             MongoDBObject("$unwind" -> "$a"),
             MongoDBObject("$group" -> new Group("$a", "all")))
         )
         return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)))
+    }
+
+    def removeDevice(arn: String): Unit = {
+        collection
+            .findAndModify(MongoDBObject("devices" -> MongoDBObject("$in" -> Array(arn))), null, null,
+                false, MongoDBObject("$pull" -> MongoDBObject("devices" -> arn)), true, false)
     }
 
     // DB document objects ===========================================================================================//

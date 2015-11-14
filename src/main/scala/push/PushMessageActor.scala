@@ -3,6 +3,7 @@ package push
 import java.util.concurrent.Executors
 
 import akka.actor.{Actor, ActorLogging}
+import com.amazonaws.services.sns.model.EndpointDisabledException
 import model.user.User
 import service.aws.SNSClient
 import service.storage.events.EventStorageService
@@ -51,7 +52,14 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
                 val alert_msg: String = alert(msg_type, result.res2, user.fullName)
                 val message: PushMessage = PushMessage(event_id, result.res2, msg_type.toString, user.fullName)
                 val payload = PushMessageWrapper2(PushMessageWrapper1(1, alert_msg, "default"), message)
-                push(token, payload.toJson.toString())
+
+                try {
+                    push(token, payload.toJson.toString())
+                } catch {
+                    case e: EndpointDisabledException =>
+                        log.info(f"ARN $token disabled. Removing.")
+                        UserStorageService.removeDevice(token)
+                }
             }
         }
 
