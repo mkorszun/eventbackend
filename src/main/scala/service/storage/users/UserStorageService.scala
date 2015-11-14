@@ -7,6 +7,8 @@ import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBObject}
 import model.token.Token
 import model.user.{PublicUser, User, UserDeviceSettings}
+import push.PushType
+import push.PushType.PushType
 import service.storage.events.EventStorageService
 import service.storage.utils.Storage
 
@@ -81,7 +83,7 @@ object UserStorageService extends Storage {
         toArray(devices.asInstanceOf[BasicDBList])
     }
 
-    def getUserDevices(ids: Array[String], setting_type: String): Array[String] = {
+    def getUserDevices(ids: Array[String], setting_type: PushType): Array[String] = {
         val steps: java.util.List[DBObject] = aggregationSteps(Array(
             MongoDBObject("$match" -> MongoDBObject("_id" -> MongoDBObject("$in" -> ids), getSetting(setting_type) -> true)),
             MongoDBObject("$project" -> MongoDBObject("a" -> "$devices")),
@@ -121,11 +123,11 @@ object UserStorageService extends Storage {
         )
     }
 
-    def getSetting(msg: String): String = msg match {
-        case "new_participant" => "settings.push_on_new_participant"
-        case "new_comment" => "settings.push_on_new_comment"
-        case "event_updated" => "settings.push_on_update"
-        case "leaving_participant" => "settings.push_on_leaving_participant"
+    def getSetting(msg: PushType): String = msg match {
+        case PushType.new_participant => "settings.push_on_new_participant"
+        case PushType.new_comment => "settings.push_on_new_comment"
+        case PushType.event_updated => "settings.push_on_update"
+        case PushType.leaving_participant => "settings.push_on_leaving_participant"
     }
 
     //================================================================================================================//
