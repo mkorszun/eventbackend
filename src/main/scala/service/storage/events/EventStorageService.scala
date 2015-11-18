@@ -20,10 +20,10 @@ object EventStorageService extends Storage {
         collection.insert(new DBEvent(user, event))
     }
 
-    def findEvents(user_id: String): DBCursor = {
+    def findEvents(user_id: String, only_timestamp: Option[Boolean]): DBCursor = {
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
         val query = MongoDBObject("participants.id" -> user_id, "timestamp" -> timestamp)
-        return collection.find(query, EVENT_LIST_FIELDS)
+        return collection.find(query, if (only_timestamp.getOrElse(false)) EVENT_LIST_TIMESTAMPS else EVENT_LIST_FIELDS)
     }
 
     def findEvents(x: Double, y: Double, max: Long, tags: Array[String]): DBCursor = {

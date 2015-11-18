@@ -60,6 +60,12 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
             dataType = "string",
             paramType = "query"),
         new ApiImplicitParam(
+            name = "only_timestamp",
+            value = "Return only timestamp attribute",
+            required = false,
+            dataType = "boolean",
+            paramType = "query"),
+        new ApiImplicitParam(
             name = "user_id",
             value = "User id",
             required = true,
@@ -69,9 +75,11 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
     def listUserEvents(id: String): Route = {
         get {
             respondWithHeader(`Cache-Control`(`max-age`(MAX_AGE_USER_EVENTS))) {
-                complete {
-                    toJson {
-                        eventService.findEvents(id)
+                parameters('only_timestamp.as[Boolean] ?) { only_timestamp =>
+                    complete {
+                        toJson {
+                            eventService.findEvents(id, only_timestamp)
+                        }
                     }
                 }
             }
