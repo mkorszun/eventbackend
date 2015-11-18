@@ -36,6 +36,8 @@ libraryDependencies += "com.github.seratch" %% "awscala" % "0.5.+"
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.10.32"
 
+libraryDependencies += "org.mindrot" % "jbcrypt" % "0.3m"
+
 scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",

@@ -5,7 +5,6 @@ import java.util.concurrent.Executors
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBObject}
-import model.token.Token
 import model.user.{PublicUser, User, UserDeviceSettings}
 import push.PushType
 import push.PushType.PushType
@@ -22,13 +21,6 @@ object UserStorageService extends Storage {
     implicit val executionContext = ExecutionContext.fromExecutorService(executorService)
 
     // Public API ====================================================================================================//
-
-    def createUser(user: User): Token = {
-        val query = MongoDBObject("provider_id" -> user.provider_id, "provider" -> user.provider)
-        val setOnInsert = MongoDBObject("$setOnInsert" -> User.toDocument(user))
-        val doc = collection.findAndModify(query, null, null, false, setOnInsert, true, true)
-        return tokenFromDocument(doc)
-    }
 
     def updateUser(id: String, token: String, user: PublicUser): Option[PublicUser] = {
 
@@ -52,11 +44,6 @@ object UserStorageService extends Storage {
         val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
         val doc = collection.findAndModify(query, null, null, false, update, true, false)
         if (doc != null) Option(PublicUser.fromDocument(doc)) else None
-    }
-
-    def readPrivateUserData(token: String): Option[User] = {
-        val doc = collection.findOne(MongoDBObject("token" -> token))
-        if (doc != null) Option(User.fromDocument(doc)) else None
     }
 
     def readPublicUserData(id: String): Option[PublicUser] = {
@@ -112,21 +99,6 @@ object UserStorageService extends Storage {
             "telephone" -> user.telephone,
             "www" -> user.www,
             "email" -> user.email
-        )
-    }
-
-    def userToParticipantDocument(user: User): DBObject = {
-        MongoDBObject(
-            "id" -> user.id,
-            "photo_url" -> user.photo_url,
-            "devices" -> user.devices
-        )
-    }
-
-    def tokenFromDocument(doc: DBObject): Token = {
-        Token(
-            doc.get("_id").toString,
-            doc.get("token").toString
         )
     }
 

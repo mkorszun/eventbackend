@@ -8,8 +8,8 @@ import auth.providers.FacebookProvider.InvalidTokenException
 import model._
 import model.user.User
 import service.http._
+import service.storage.auth.AuthStorageService
 import service.storage.events.{EventHasOtherParticipants, EventNotFound, UserAlreadyAdded, UserNotPresent}
-import service.storage.users.UserStorageService
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
 import spray.routing._
@@ -27,7 +27,7 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
         headerName = "token",
         queryStringParameterName = "token") { key =>
         Future {
-            UserStorageService.readPrivateUserData(key)
+            AuthStorageService.loadUserByToken(key)
         }
     }
 
@@ -124,7 +124,7 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                     }
                 case e: NoSuchElementException =>
                     requestUri { uri =>
-                        log.warning("Request to {} not found", uri)
+                        log.error(e, "Request to {} not found", uri)
                         val error: APIError = new APIError("Object not found")
                         complete((NotFound, error))
                     }

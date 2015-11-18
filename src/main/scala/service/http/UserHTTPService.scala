@@ -7,9 +7,11 @@ import akka.actor.{ActorSystem, Props}
 import com.wordnik.swagger.annotations._
 import config.Config
 import model.event.Event
-import model.user.{PublicUser, User, UserDevice}
+import model.token.Token
+import model.user.{NewUser, PublicUser, User, UserDevice}
 import push.{DeviceRegistrationActor, RegisterDevice}
 import service.photo.PhotoStorageService
+import service.storage.auth.AuthStorageService
 import service.storage.events.EventStorageService
 import service.storage.users.UserStorageService
 import spray.http.CacheDirectives.`max-age`
@@ -30,19 +32,24 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
     object toJson extends JsonUserDirective
 
     def routes(): Route = {
-        authenticate(authenticator) { user =>
-            pathPrefix("user" / Segment) {
-                id =>
-                    pathEnd {
-                        readUser(id) ~ updateUser(id, user)
-                    } ~ path("events") {
-                        listUserEvents(id)
-                    } ~ path("photo") {
-                        updateUserPhoto(id, user)
-                    } ~ path("device") {
-                        updateUserDevice(id, user)
-                    }
-            }
+        pathPrefix("user") {
+            pathEnd {
+                createUser()
+            } ~
+                pathPrefix(Segment) {
+                    id =>
+                        authenticate(authenticator) { user =>
+                            pathEnd {
+                                readUser(id) ~ updateUser(id, user)
+                            } ~ path("events") {
+                                listUserEvents(id)
+                            } ~ path("photo") {
+                                updateUserPhoto(id, user)
+                            } ~ path("device") {
+                                updateUserDevice(id, user)
+                            }
+                        }
+                }
         }
     }
 
@@ -82,6 +89,29 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @ApiOperation(
+        httpMethod = "POST",
+        value = "Create user",
+        response = classOf[Token])
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "New user form",
+            value = "New user",
+            required = true,
+            dataType = "model.user.NewUser",
+            paramType = "body")
+    ))
+    def createUser(): Route = {
+        import format.TokenJsonProtocol._
+        import model.user.NewUserFormat._
+        import spray.httpx.SprayJsonSupport._
+        post {
+            entity(as[NewUser]) { new_user =>
+                complete(AuthStorageService.createUser(User.fromEmailPassword(new_user.email, new_user.password)))
             }
         }
     }

@@ -4,5 +4,5 @@ import model.token.Token
 import spray.json.DefaultJsonProtocol
 
 object TokenJsonProtocol extends DefaultJsonProtocol {
-    implicit val tokenFormat = jsonFormat2(Token)
+    implicit val tokenFormat = jsonFormat2(Token.apply)
 }

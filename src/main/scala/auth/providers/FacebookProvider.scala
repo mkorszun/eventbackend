@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import auth.BearerTokenGenerator
 import model.token.Token
 import model.user.User
-import service.storage.users.UserStorageService
+import service.storage.auth.AuthStorageService
 import spray.client.pipelining._
 import spray.http._
 import spray.httpx.SprayJsonSupport._
@@ -52,8 +52,8 @@ object FacebookProvider {
                     val userToken = BearerTokenGenerator.generateSHAToken(id)
                     val newUser: User = User(
                         java.util.UUID.randomUUID.toString, id, "facebook", userToken,
-                        first_name, last_name, photo_link(id), "", None, None, None, Option(Array()))
-                    Option(UserStorageService.createUser(newUser))
+                        first_name, last_name, photo_link(id), "", None, None, None, Option(Array()), None)
+                    Option(AuthStorageService.getOrCreate(newUser))
                 }
             case _ =>
                 Future {

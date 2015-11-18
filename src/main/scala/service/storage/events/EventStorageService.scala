@@ -62,7 +62,7 @@ object EventStorageService extends Storage {
         if (!isEvent(event_id)) throw new EventNotFound
         val constraint = MongoDBObject("$nin" -> (MongoDBList.newBuilder[String] += user.id).result())
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> constraint)
-        val participant = MongoDBObject("participants" -> UserStorageService.userToParticipantDocument(user))
+        val participant = MongoDBObject("participants" -> User.toParticipantDocument(user))
         val update = MongoDBObject("$addToSet" -> participant, "$inc" -> MongoDBObject("spots" -> 1))
         val doc = collection.findAndModify(event, EVENT_DETAILS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
@@ -156,7 +156,7 @@ object EventStorageService extends Storage {
 
     private def initialParticipants(user: User): MongoDBList = {
         val builder: MongoDBListBuilder = MongoDBList.newBuilder[DBObject]
-        builder += UserStorageService.userToParticipantDocument(user)
+        builder += User.toParticipantDocument(user)
         return builder.result()
     }
 

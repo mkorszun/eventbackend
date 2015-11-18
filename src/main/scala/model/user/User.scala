@@ -1,8 +1,10 @@
 package model.user
 
+import auth.BearerTokenGenerator
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
+import org.mindrot.jbcrypt.BCrypt
 import service.storage.users.UserStorageService._
 
 case class User(
@@ -17,7 +19,8 @@ case class User(
     telephone: Option[String],
     www: Option[String],
     email: Option[String],
-    devices: Option[Array[String]]) {
+    devices: Option[Array[String]],
+    password: Option[String]) {
 
     def fullName: String = f"$first_name $last_name"
 }
@@ -37,7 +40,16 @@ object User {
             "www" -> user.www,
             "email" -> user.email,
             "devices" -> user.devices,
-            "settings" -> UserDeviceSettings.toDocument(new UserDeviceSettings(true, true, true))
+            "settings" -> UserDeviceSettings.toDocument(new UserDeviceSettings(true, true, true)),
+            "password" -> user.password
+        )
+    }
+
+    def toParticipantDocument(user: User): DBObject = {
+        MongoDBObject(
+            "id" -> user.id,
+            "photo_url" -> user.photo_url,
+            "devices" -> user.devices
         )
     }
 
@@ -54,7 +66,16 @@ object User {
             Option(doc.get("telephone").asInstanceOf[String]),
             Option(doc.get("www").asInstanceOf[String]),
             Option(doc.get("email").asInstanceOf[String]),
-            Option(toArray(doc.get("devices").asInstanceOf[BasicDBList]))
+            Option(toArray(doc.get("devices").asInstanceOf[BasicDBList])),
+            Option(doc.get("password").toString)
         )
+    }
+
+    def fromEmailPassword(email: String, password: String): User = {
+        val userToken = BearerTokenGenerator.generateSHAToken(email)
+        val passwordHash = BCrypt.hashpw(password, BCrypt.gensalt())
+        val id: String = java.util.UUID.randomUUID.toString
+        User(id, "", "email", userToken, "", "", "", "", None, None, Option(email), Option(Array()),
+            Option(passwordHash))
     }
 }
