@@ -41,6 +41,13 @@ object EventStorageService extends Storage {
         throw new EventNotFound
     }
 
+    def getEventComments(event_id: String): DBObject = {
+        val query = MongoDBObject("_id" -> event_id)
+        val doc = collection.findOne(query, EVENT_COMMENTS_FIELDS)
+        if (doc != null) return doc
+        throw new EventNotFound
+    }
+
     def removeParticipant(event_id: String, user: User): DBObject = {
         if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)

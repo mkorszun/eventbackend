@@ -50,7 +50,7 @@ trait EventHTTPService extends HttpService with Config {
                 pathEnd {
                     authenticate(authenticator) {
                         user => addComment(user, id)
-                    }
+                    } ~ getComments(id)
                 }
             }
         }
@@ -106,6 +106,28 @@ trait EventHTTPService extends HttpService with Config {
                                 }
                             }
                     }
+            }
+        }
+    }
+
+    @Path("/{event_id}/comment")
+    @ApiOperation(
+        httpMethod = "GET",
+        value = "Get comments")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "event_id",
+            value = "Event",
+            required = true,
+            dataType = "string",
+            paramType = "path")
+    ))
+    def getComments(id: String): Route = {
+        get {
+            complete {
+                toJson {
+                    eventService.getEventComments(id)
+                }
             }
         }
     }
