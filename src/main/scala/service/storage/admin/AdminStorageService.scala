@@ -69,7 +69,7 @@ trait AdminStorageService extends Storage {
         put("pace", event.pace)
         put("deleted", false)
         put("spots", 0)
-        put("admin", true)
+        put("official", true)
         put("www", event.www)
     }
 
