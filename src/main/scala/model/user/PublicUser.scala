@@ -38,8 +38,7 @@ object PublicUser {
             "bio" -> user.bio,
             "telephone" -> user.telephone,
             "www" -> user.www,
-            "email" -> user.email,
-            "settings" -> UserDeviceSettings.toDocument(user.settings.get)
+            "email" -> user.email
         )
     }
 }
