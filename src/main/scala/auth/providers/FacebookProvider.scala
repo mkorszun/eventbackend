@@ -16,10 +16,10 @@ import scala.concurrent.Future
 
 object FacebookProvider {
 
-    case class FacebookUser(id: String, first_name: String, last_name: String)
+    case class FacebookUser(id: String, first_name: String, last_name: String, email: Option[String])
 
     object FacebookUserJsonProtocol extends DefaultJsonProtocol {
-        implicit val facebookUserFormat = jsonFormat3(FacebookUser)
+        implicit val facebookUserFormat = jsonFormat4(FacebookUser)
     }
 
     val accept = "application/json; charset=UTF-8"
@@ -47,12 +47,12 @@ object FacebookProvider {
         }
 
         val resp: Future[Future[Option[Token]]] = response.map[Future[Option[Token]]] {
-            case FacebookUser(id, first_name, last_name) =>
+            case FacebookUser(id, first_name, last_name, email) =>
                 Future {
                     val userToken = BearerTokenGenerator.generateSHAToken(id)
                     val newUser: User = User(
                         java.util.UUID.randomUUID.toString, id, "facebook", userToken,
-                        first_name, last_name, photo_link(id), "", None, None, None, Option(Array()), None)
+                        first_name, last_name, photo_link(id), "", None, None, email, Option(Array()), None)
                     Option(AuthStorageService.getOrCreate(newUser))
                 }
             case _ =>
