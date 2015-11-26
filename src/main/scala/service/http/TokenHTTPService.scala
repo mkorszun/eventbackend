@@ -1,5 +1,7 @@
 package service.http
 
+import javax.ws.rs.Path
+
 import auth.BasicAuthenticator
 import auth.providers.FacebookProvider
 import com.wordnik.swagger.annotations._
@@ -15,7 +17,7 @@ trait TokenHTTPService extends HttpService with BasicAuthenticator {
     def routes(): Route = {
         path("token") {
             createToken()
-        } ~ path("token1") {
+        } ~ pathPrefix("v2") {
             authenticate(basicUserAuthenticator) { user =>
                 createToken1(user)
             }
@@ -24,7 +26,8 @@ trait TokenHTTPService extends HttpService with BasicAuthenticator {
 
     @ApiOperation(
         httpMethod = "POST",
-        value = "Create user access token")
+        value = "Create user access token with facebook token",
+        response = classOf[Token])
     @ApiImplicitParams(Array(
         new ApiImplicitParam(
             name = "facebook_token",
@@ -42,9 +45,11 @@ trait TokenHTTPService extends HttpService with BasicAuthenticator {
         }
     }
 
+    @Path("/v2")
     @ApiOperation(
         httpMethod = "POST",
-        value = "Create user access token")
+        value = "Create user access token with email and password",
+        response = classOf[Token])
     def createToken1(user: User): Route = {
         import format.TokenJsonProtocol._
         import spray.httpx.SprayJsonSupport._
