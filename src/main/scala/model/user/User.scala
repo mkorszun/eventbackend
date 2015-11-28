@@ -1,5 +1,7 @@
 package model.user
 
+import java.util.Date
+
 import auth.BearerTokenGenerator
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports._
@@ -29,7 +31,7 @@ case class User(
 
 object User {
     def toDocument(user: User): DBObject = {
-        MongoDBObject(
+        val doc = MongoDBObject(
             "_id" -> user.id,
             "provider_id" -> user.provider_id,
             "provider" -> user.provider,
@@ -47,6 +49,9 @@ object User {
             "verified" -> user.verified,
             "confirmation_token" -> user.confirmation_token
         )
+
+        if (!user.verified) doc.put("unverified_since", new Date())
+        return doc
     }
 
     def toParticipantDocument(user: User): DBObject = {

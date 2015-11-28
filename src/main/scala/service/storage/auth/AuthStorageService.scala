@@ -10,12 +10,14 @@ object AuthStorageService extends Storage {
 
     val collection = getCollection("users")
 
+    val ID = "_id"
     val EMAIL = "email"
     val PROVIDER_ID = "provider_id"
     val PROVIDER = "provider"
     val TOKEN = "token"
     val VERIFIED = "verified"
     val CONFIRMATION_TOKEN = "confirmation_token"
+    val UNVERIFIED_SINCE = "unverified_since"
 
     def createUser(user: User): User = {
         collection.insert(User.toDocument(user))
@@ -40,8 +42,9 @@ object AuthStorageService extends Storage {
     }
 
     def confirm(id: String, token: String): Unit = {
-        val query = MongoDBObject(CONFIRMATION_TOKEN -> token, VERIFIED -> false, "_id" -> id)
-        val update = $set(VERIFIED -> true)
-        collection.findAndModify(query, MongoDBObject(), null, false, update, true, false)
+        val query = MongoDBObject(CONFIRMATION_TOKEN -> token, ID -> id)
+        val update = $set(VERIFIED -> true) ++ $unset(UNVERIFIED_SINCE)
+        val doc = collection.findAndModify(query, MongoDBObject(), null, false, update, true, false)
+        if (doc == null) throw new UserExpiredException
     }
 }

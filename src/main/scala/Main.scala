@@ -8,7 +8,7 @@ import auth.providers.FacebookProvider.InvalidTokenException
 import model._
 import model.user.User
 import service.http._
-import service.storage.auth.AuthStorageService
+import service.storage.auth.{UserExpiredException, AuthStorageService}
 import service.storage.events.{EventHasOtherParticipants, EventNotFound, UserAlreadyAdded, UserNotPresent}
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
@@ -160,9 +160,15 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                     }
                 case e: com.mongodb.DuplicateKeyException =>
                     requestUri { uri =>
-                        log.error(e, "Request to {} could not be handled normally", uri)
+                        log.warning("Request to {} could not be handled normally", uri)
                         val error: APIError = new APIError("Email already exists")
                         complete((Conflict, error))
+                    }
+                case e: UserExpiredException =>
+                    requestUri { uri =>
+                        log.warning("Request to {} could not be handled normally", uri)
+                        val error: APIError = new APIError("User did not confirmed within 4h. Recreate.")
+                        complete((NotFound, error))
                     }
                 case e: Exception =>
                     requestUri { uri =>
