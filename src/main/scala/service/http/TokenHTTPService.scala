@@ -15,11 +15,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 trait TokenHTTPService extends HttpService with BasicAuthenticator {
 
     def routes(): Route = {
-        path("token") {
-            createToken()
-        } ~ pathPrefix("v2") {
-            authenticate(basicUserAuthenticator) { user =>
-                createToken1(user)
+        pathPrefix("token") {
+            pathEnd {
+                createToken()
+            } ~ pathPrefix("v2") {
+                authenticate(basicUserAuthenticator) { user =>
+                    createToken1(user)
+                }
             }
         }
     }
