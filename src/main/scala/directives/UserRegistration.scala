@@ -13,7 +13,7 @@ trait UserRegistration {
         throw new InvalidCredentialsException("Valid email and password required")
     }
 
-    def isValidEmail(email: String): Boolean = """(\w+)@([\w\.]+)""".r.unapplySeq(email).isDefined
+    def isValidEmail(email : String): Boolean = if("""^[-a-z0-9!#$%&'*+/=?^_`{|}~]+(\.[-a-z0-9!#$%&'*+/=?^_`{|}~]+)*@([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)*(aero|arpa|asia|biz|cat|com|coop|edu|gov|info|int|jobs|mil|mobi|museum|name|net|org|pro|tel|travel|[a-z][a-z])$""".r.findFirstIn(email) == None)false else true
 
     def isValidPassword(password: String): Boolean = password.length >= 8
 }
