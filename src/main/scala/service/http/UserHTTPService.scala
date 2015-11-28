@@ -6,6 +6,8 @@ import _root_.directives.{JsonUserDirective, UserPermissions}
 import akka.actor.{ActorSystem, Props}
 import com.wordnik.swagger.annotations._
 import config.Config
+import mailer.{AccountConfirmation, MailerActor}
+import model.APIResponse
 import model.event.Event
 import model.token.Token
 import model.user.{NewUser, PublicUser, User, UserDevice}
@@ -24,6 +26,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
 
     implicit val system = ActorSystem("my-system")
     val registrationActor = system.actorOf(Props[DeviceRegistrationActor])
+    val mailerActor = system.actorOf(Props[MailerActor])
 
     implicit val eventService = EventStorageService
 
@@ -108,12 +111,16 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
             paramType = "body")
     ))
     def createUser(): Route = {
-        import format.TokenJsonProtocol._
+        import format.APIResponseFormat._
         import model.user.NewUserFormat._
         import spray.httpx.SprayJsonSupport._
         post {
             entity(as[NewUser]) { new_user =>
-                complete(AuthStorageService.createUser(User.fromEmailPassword(new_user.email, new_user.password)))
+                complete {
+                    val user = AuthStorageService.createUser(User.fromEmailPassword(new_user.email, new_user.password))
+                    mailerActor ! AccountConfirmation(user.id, user.confirmation_token.get, user.email.get)
+                    APIResponse("Confirmation link sent")
+                }
             }
         }
     }
@@ -284,7 +291,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
 
     @Path("/{user_id}/confirm")
     @ApiOperation(
-        httpMethod = "POST",
+        httpMethod = "GET",
         value = "Confirm user")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(
@@ -303,7 +310,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
     def confirm(id: String): Route = {
         import format.APIResponseFormat._
         import spray.httpx.SprayJsonSupport._
-        post {
+        get {
             parameters('token.as[String]) { token =>
                 complete {
                     toJson {

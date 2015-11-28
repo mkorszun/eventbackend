@@ -17,9 +17,9 @@ object AuthStorageService extends Storage {
     val VERIFIED = "verified"
     val CONFIRMATION_TOKEN = "confirmation_token"
 
-    def createUser(user: User): Token = {
+    def createUser(user: User): User = {
         collection.insert(User.toDocument(user))
-        return Token.fromUser(user)
+        return user
     }
 
     def getOrCreate(user: User): Token = {

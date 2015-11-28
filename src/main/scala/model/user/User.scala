@@ -21,7 +21,8 @@ case class User(
     email: Option[String],
     devices: Option[Array[String]],
     password: Option[String],
-    verified: Boolean) {
+    verified: Boolean,
+    confirmation_token: Option[String]) {
 
     def fullName: String = f"$first_name $last_name"
 }
@@ -44,7 +45,7 @@ object User {
             "settings" -> UserDeviceSettings.toDocument(new UserDeviceSettings(true, true, true)),
             "password" -> user.password,
             "verified" -> user.verified,
-            "confirmation_token" -> BearerTokenGenerator.generateSHAToken(user.id)
+            "confirmation_token" -> user.confirmation_token
         )
     }
 
@@ -71,7 +72,8 @@ object User {
             Option(doc.get("email").asInstanceOf[String]),
             Option(toArray(doc.get("devices").asInstanceOf[BasicDBList])),
             Option(doc.get("password").toString),
-            doc.getAs[Boolean]("verified").getOrElse(true)
+            doc.getAs[Boolean]("verified").getOrElse(true),
+            None
         )
     }
 
@@ -80,6 +82,6 @@ object User {
         val passwordHash = BCrypt.hashpw(password, BCrypt.gensalt())
         val id: String = java.util.UUID.randomUUID.toString
         User(id, "", "email", userToken, "", "", "", "", None, None, Option(email), Option(Array()),
-            Option(passwordHash), false)
+            Option(passwordHash), false, Option(BearerTokenGenerator.generateSHAToken(id)))
     }
 }
