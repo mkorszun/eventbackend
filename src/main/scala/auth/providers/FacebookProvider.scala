@@ -52,7 +52,7 @@ object FacebookProvider {
                     val userToken = BearerTokenGenerator.generateSHAToken(id)
                     val newUser: User = User(
                         java.util.UUID.randomUUID.toString, id, "facebook", userToken,
-                        first_name, last_name, photo_link(id), "", None, None, email, Option(Array()), None)
+                        first_name, last_name, photo_link(id), "", None, None, email, Option(Array()), None, true)
                     Option(AuthStorageService.getOrCreate(newUser))
                 }
             case _ =>

@@ -48,6 +48,8 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                             } ~ path("device") {
                                 updateUserDevice(id, user)
                             }
+                        } ~ pathPrefix("confirm") {
+                            confirm(id)
                         }
                 }
         }
@@ -274,6 +276,38 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
                                 registrationActor ! RegisterDevice(id, device_info)
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    @Path("/{user_id}/confirm")
+    @ApiOperation(
+        httpMethod = "POST",
+        value = "Confirm user")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "user_id",
+            value = "User to confirm",
+            required = true,
+            dataType = "string",
+            paramType = "path"),
+        new ApiImplicitParam(
+            name = "token",
+            value = "Confirmation token",
+            required = true,
+            dataType = "string",
+            paramType = "query")
+    ))
+    def confirm(id: String): Route = {
+        import format.APIResponseFormat._
+        import spray.httpx.SprayJsonSupport._
+        post {
+            parameters('token.as[String]) { token =>
+                complete {
+                    toJson {
+                        AuthStorageService.confirm(id, token)
                     }
                 }
             }

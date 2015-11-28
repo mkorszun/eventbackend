@@ -1,5 +1,6 @@
 package service.storage.auth
 
+import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import model.token.Token
 import model.user.User
@@ -13,6 +14,8 @@ object AuthStorageService extends Storage {
     val PROVIDER_ID = "provider_id"
     val PROVIDER = "provider"
     val TOKEN = "token"
+    val VERIFIED = "verified"
+    val CONFIRMATION_TOKEN = "confirmation_token"
 
     def createUser(user: User): Token = {
         collection.insert(User.toDocument(user))
@@ -27,12 +30,18 @@ object AuthStorageService extends Storage {
     }
 
     def loadUserByEmail(email: String): Option[User] = {
-        val doc = collection.findOne(MongoDBObject(EMAIL -> email))
+        val doc = collection.findOne(MongoDBObject(EMAIL -> email, VERIFIED -> true))
         if (doc != null) Option(User.fromDocument(doc)) else None
     }
 
     def loadUserByToken(token: String): Option[User] = {
-        val doc = collection.findOne(MongoDBObject(TOKEN -> token))
+        val doc = collection.findOne(MongoDBObject(TOKEN -> token, VERIFIED -> true))
         if (doc != null) Option(User.fromDocument(doc)) else None
+    }
+
+    def confirm(id: String, token: String): Unit = {
+        val query = MongoDBObject(CONFIRMATION_TOKEN -> token, VERIFIED -> false, "_id" -> id)
+        val update = $set(VERIFIED -> true)
+        collection.findAndModify(query, MongoDBObject(), null, false, update, true, false)
     }
 }
