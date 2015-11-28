@@ -1,7 +1,7 @@
 import java.util._
 import java.util.concurrent.TimeoutException
 
-import _root_.directives.UnauthorizedException
+import _root_.directives.{InvalidCredentialsException, UnauthorizedException}
 import akka.actor._
 import auth.TokenAuthenticator
 import auth.providers.FacebookProvider.InvalidTokenException
@@ -169,6 +169,12 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                         log.warning("Request to {} could not be handled normally", uri)
                         val error: APIError = new APIError("User did not confirmed within 4h. Recreate.")
                         complete((NotFound, error))
+                    }
+                case e: InvalidCredentialsException =>
+                    requestUri { uri =>
+                        log.warning("Request to {} could not be handled normally", uri)
+                        val error: APIError = new APIError(e.msg)
+                        complete((BadRequest, error))
                     }
                 case e: Exception =>
                     requestUri { uri =>

@@ -2,7 +2,7 @@ package service.http
 
 import javax.ws.rs.Path
 
-import _root_.directives.{JsonUserDirective, UserPermissions}
+import _root_.directives.{JsonUserDirective, UserPermissions, UserRegistration}
 import akka.actor.{ActorSystem, Props}
 import com.wordnik.swagger.annotations._
 import config.Config
@@ -22,7 +22,7 @@ import spray.http.{BodyPart, MultipartFormData}
 import spray.routing._
 
 @Api(value = "/user", description = "User actions", produces = "application/json", position = 1)
-trait UserHTTPService extends HttpService with UserPermissions with Config {
+trait UserHTTPService extends HttpService with UserPermissions with Config with UserRegistration {
 
     implicit val system = ActorSystem("my-system")
     val registrationActor = system.actorOf(Props[DeviceRegistrationActor])
@@ -116,10 +116,13 @@ trait UserHTTPService extends HttpService with UserPermissions with Config {
         import spray.httpx.SprayJsonSupport._
         post {
             entity(as[NewUser]) { new_user =>
-                complete {
-                    val user = AuthStorageService.createUser(User.fromEmailPassword(new_user.email, new_user.password))
-                    mailerActor ! AccountConfirmation(user.id, user.confirmation_token.get, user.email.get)
-                    APIResponse("Confirmation link sent")
+                checkCredentials(new_user) { ok =>
+                    complete {
+                        val user = User.fromEmailPassword(new_user.email, new_user.password)
+                        AuthStorageService.createUser(user)
+                        mailerActor ! AccountConfirmation(user.id, user.confirmation_token.get, user.email.get)
+                        APIResponse("Confirmation link sent")
+                    }
                 }
             }
         }
