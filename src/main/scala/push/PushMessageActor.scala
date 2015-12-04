@@ -44,9 +44,11 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
         val f = Future {
             val result: EventStorageService.GroupResult = EventStorageService.getEventParticipants(event_id)
             for (token <- UserStorageService.getUserDevices(result.res1, msg_type) diff user.devices.get) {
-                val alert_msg: String = alert(msg_type, result.res2, user.fullName)
-                val message: PushMessage = PushMessage(event_id, result.res2, msg_type.toString, user.fullName)
-                val payload = PushMessageWrapper2(PushMessageWrapper1(1, alert_msg, "default"), message)
+                val default = alert(msg_type, result.res2, user.fullName)
+                val params = new Params(event_id, result.res2, msg_type.toString, user.fullName)
+                val APNS = new APNS(new APS(1, default, "default"), params)
+                val GCM = new GCM(new DATA(default, params))
+                val payload = new PushMessage(default, GCM.toJson.toString(), APNS.toJson.toString())
                 if (!push(token, payload.toJson.toString())) deviceActor ! UnregisterDevice(null, token)
             }
         }

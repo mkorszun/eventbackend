@@ -22,7 +22,7 @@ trait SNSClient extends Config {
 
     def push(arn: String, msg: String): Boolean = {
         try {
-            client.publish(new PublishRequest().withTargetArn(arn).withMessage(msg))
+            client.publish(new PublishRequest().withTargetArn(arn).withMessage(msg).withMessageStructure("json"))
             return true
         } catch {
             case e: EndpointDisabledException => return false
