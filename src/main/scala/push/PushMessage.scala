@@ -2,7 +2,7 @@ package push
 
 import spray.json.DefaultJsonProtocol
 
-case class PushMessage(default: String, GCM: String, APNS: String)
+case class PushMessage(default: String, GCM: String, APNS: String, APNS_SANDBOX: String)
 
 case class GCM(data: DATA)
 
@@ -35,5 +35,5 @@ object APNS extends DefaultJsonProtocol {
 }
 
 object PushMessage extends DefaultJsonProtocol {
-    implicit val format = jsonFormat3(PushMessage.apply)
+    implicit val format = jsonFormat4(PushMessage.apply)
 }
