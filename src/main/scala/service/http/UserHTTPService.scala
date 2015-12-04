@@ -18,6 +18,7 @@ import service.storage.events.EventStorageService
 import service.storage.users.UserStorageService
 import spray.http.CacheDirectives.`max-age`
 import spray.http.HttpHeaders.`Cache-Control`
+import spray.http.StatusCodes._
 import spray.http.{BodyPart, MultipartFormData}
 import spray.routing._
 
@@ -311,15 +312,10 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
             paramType = "query")
     ))
     def confirm(id: String): Route = {
-        import format.APIResponseFormat._
-        import spray.httpx.SprayJsonSupport._
         get {
             parameters('token.as[String]) { token =>
-                complete {
-                    toJson {
-                        AuthStorageService.confirm(id, token)
-                    }
-                }
+                AuthStorageService.confirm(id, token)
+                redirect(CONFIRMATION_REDIRECT, MovedPermanently)
             }
         }
     }

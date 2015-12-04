@@ -23,4 +23,5 @@ trait Config {
     val MAILER_SENDER = sys.env.get("MAILER_SENDER").getOrElse("noreply@biegaj.my")
     val MAILER_EXECUTOR_SIZE = System.getenv("REGISTRATION_EXECUTOR_SIZE").toInt
     val ACCOUNT_CONFIRMATION_TITLE = sys.env.get("ACCOUNT_CONFIRMATION_TITLE").getOrElse("Biegajmy - Link aktywacyjny")
+    val CONFIRMATION_REDIRECT = sys.env.get("CONFIRMATION_REDIRECT").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/registration_confirmation/index.html")
 }
