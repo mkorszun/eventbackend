@@ -43,7 +43,7 @@ object AuthStorageService extends Storage {
 
     def confirm(id: String, token: String): Unit = {
         val query = MongoDBObject(CONFIRMATION_TOKEN -> token, ID -> id)
-        val update = $set(VERIFIED -> true) ++ $unset(UNVERIFIED_SINCE)
+        val update = $set(VERIFIED -> true) ++ $unset(UNVERIFIED_SINCE, CONFIRMATION_TOKEN)
         val doc = collection.findAndModify(query, MongoDBObject(), null, false, update, true, false)
         if (doc == null) throw new UserExpiredException
     }
