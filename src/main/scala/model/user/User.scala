@@ -82,11 +82,11 @@ object User {
         )
     }
 
-    def fromEmailPassword(email: String, password: String): User = {
+    def fromEmailPassword(email: String, password: String, photo: String): User = {
         val userToken = BearerTokenGenerator.generateSHAToken(email)
         val passwordHash = BCrypt.hashpw(password, BCrypt.gensalt())
         val id: String = java.util.UUID.randomUUID.toString
-        User(id, "", "email", userToken, "", "", "", "", None, None, Option(email), Option(Array()),
+        User(id, "", "email", userToken, "", "", photo, "", None, None, Option(email), Option(Array()),
             Option(passwordHash), false, Option(BearerTokenGenerator.generateSHAToken(id)))
     }
 }

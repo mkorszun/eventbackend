@@ -119,7 +119,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
             entity(as[NewUser]) { new_user =>
                 checkCredentials(new_user) { ok =>
                     complete {
-                        val user = User.fromEmailPassword(new_user.email, new_user.password)
+                        val user = User.fromEmailPassword(new_user.email, new_user.password, DEFAULT_PROFILE_PIC)
                         AuthStorageService.createUser(user)
                         mailerActor ! AccountConfirmation(user.id, user.confirmation_token.get, user.email.get)
                         APIResponse("Confirmation link sent")
