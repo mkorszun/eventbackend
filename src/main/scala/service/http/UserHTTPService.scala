@@ -55,6 +55,9 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
                         } ~ pathPrefix("confirm") {
                             confirm(id)
                         }
+                } ~
+                pathPrefix("password_reset") {
+                    password_reset()
                 }
         }
     }
@@ -316,6 +319,20 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
             parameters('token.as[String]) { token =>
                 AuthStorageService.confirm(id, token)
                 redirect(CONFIRMATION_REDIRECT, MovedPermanently)
+            }
+        }
+    }
+
+    @Path("/password_reset")
+    @ApiOperation(
+        httpMethod = "GET",
+        value = "Reset password")
+    def password_reset(): Route = {
+        import format.APIResponseFormat._
+        import spray.httpx.SprayJsonSupport._
+        get {
+            complete {
+                APIResponse("OK")
             }
         }
     }
