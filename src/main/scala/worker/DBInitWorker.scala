@@ -49,6 +49,8 @@ object DBInitWorker {
         for (idx <- user_indexes) users.createIndex(idx)
         for (idx <- event_indexes) events.createIndex(idx)
         for (idx <- unique_user_indexes) users.createIndex(idx, UNIQUE)
+
+        users.createIndex(MongoDBObject("unverified_since" -> 1), MongoDBObject("expireAfterSeconds" -> 1440))
     }
 
     def main(args: Array[String]): Unit = {
