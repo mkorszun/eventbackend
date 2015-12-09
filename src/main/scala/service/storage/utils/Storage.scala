@@ -12,10 +12,11 @@ import com.mongodb.{Cursor, DBCollection}
 trait Storage {
 
     val UPDATED_AT = "updated_at"
+    val COMMENTS_COUNT = "comments_count";
     val EVENT_DETAILS_FIELDS = MongoDBObject("participants.devices" -> 0)
     val EVENT_DETAILS_ADMIN_FIELDS = MongoDBObject("participants" -> 0, "comments" -> 0)
     val EVENT_LIST_FIELDS = MongoDBObject("comments" -> 0, "participants" -> 0, "deleted" -> 0)
-    val EVENT_LIST_TIMESTAMPS = MongoDBObject("timestamp" -> 1, UPDATED_AT -> 1)
+    val EVENT_LIST_TIMESTAMPS = MongoDBObject("timestamp" -> 1, UPDATED_AT -> 1, COMMENTS_COUNT -> 1)
     val EVENT_LIST_ADMIN_FIELDS = MongoDBObject("_id" -> 1, "headline" -> 1, "timestamp" -> 1, "distance" -> 1)
     val EVENT_COMMENTS_FIELDS = MongoDBObject("comments" -> 1, "_id" -> 0)
 

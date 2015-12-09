@@ -71,7 +71,8 @@ object EventStorageService extends Storage {
 
     def addComment(event_id: String, user: User, msg: String): DBObject = {
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
-        val update = MongoDBObject("$push" -> MongoDBObject("comments" -> new DBEventComment(user, msg)), "$set" -> updated)
+        val update = MongoDBObject("$push" -> MongoDBObject("comments" -> new DBEventComment(user, msg)),
+            "$set" -> updated, "$inc" -> MongoDBObject(COMMENTS_COUNT -> 1))
         val doc = collection.findAndModify(event, EVENT_COMMENTS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
         throw new EventNotFound
@@ -155,6 +156,7 @@ object EventStorageService extends Storage {
         put("description", event.description)
         put("participants", initialParticipants(user))
         put("comments", new MongoDBList())
+        put(COMMENTS_COUNT, 0)
         put("loc", new DBGeoPoint(event.x, event.y))
         put("tags", event.tags)
         put("distance", event.distance)

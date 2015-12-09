@@ -65,6 +65,7 @@ trait AdminStorageService extends Storage {
         put("description", event.description)
         put("participants", new MongoDBList())
         put("comments", new MongoDBList())
+        put(COMMENTS_COUNT, 0)
         put("loc", new DBGeoPoint(event.x, event.y))
         put("tags", event.tags)
         put("distance", event.distance)
