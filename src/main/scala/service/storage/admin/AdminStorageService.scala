@@ -1,12 +1,13 @@
 package service.storage.admin
 
+import java.util.Date
+
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
 import com.mongodb.{DBCursor, DBObject}
 import model.admin.AdminEvent
 import model.user.PublicUser
 import service.storage.events.EventNotFound
-import service.storage.users.UserStorageService
 import service.storage.utils.Storage
 
 trait AdminStorageService extends Storage {
@@ -44,7 +45,8 @@ trait AdminStorageService extends Storage {
             "www" -> event.www,
             "user.first_name" -> event.user.first_name,
             "user.www" -> event.user.www,
-            "user.email" -> event.user.email
+            "user.email" -> event.user.email,
+            UPDATED_AT -> new Date().getTime
         )
 
         val query = MongoDBObject("_id" -> event_id)
@@ -71,6 +73,7 @@ trait AdminStorageService extends Storage {
         put("spots", 0)
         put("official", true)
         put("www", event.www)
+        put(UPDATED_AT, new Date().getTime)
     }
 
     //================================================================================================================//

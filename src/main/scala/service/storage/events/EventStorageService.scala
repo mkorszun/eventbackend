@@ -52,7 +52,7 @@ object EventStorageService extends Storage {
         if (!isEvent(event_id)) throw new EventNotFound
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
         val participant = MongoDBObject("participants" -> MongoDBObject("id" -> user.id))
-        val update = MongoDBObject("$pull" -> participant, "$inc" -> MongoDBObject("spots" -> -1))
+        val update = MongoDBObject("$pull" -> participant, "$inc" -> MongoDBObject("spots" -> -1), "$set" -> updated)
         val doc = collection.findAndModify(event, EVENT_DETAILS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserNotPresent
@@ -63,7 +63,7 @@ object EventStorageService extends Storage {
         val constraint = MongoDBObject("$nin" -> (MongoDBList.newBuilder[String] += user.id).result())
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> constraint)
         val participant = MongoDBObject("participants" -> User.toParticipantDocument(user))
-        val update = MongoDBObject("$addToSet" -> participant, "$inc" -> MongoDBObject("spots" -> 1))
+        val update = MongoDBObject("$addToSet" -> participant, "$inc" -> MongoDBObject("spots" -> 1), "$set" -> updated)
         val doc = collection.findAndModify(event, EVENT_DETAILS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
         throw new UserAlreadyAdded
@@ -71,7 +71,7 @@ object EventStorageService extends Storage {
 
     def addComment(event_id: String, user: User, msg: String): DBObject = {
         val event = MongoDBObject("_id" -> event_id, "participants.id" -> user.id)
-        val update = MongoDBObject("$push" -> MongoDBObject("comments" -> new DBEventComment(user, msg)))
+        val update = MongoDBObject("$push" -> MongoDBObject("comments" -> new DBEventComment(user, msg)), "$set" -> updated)
         val doc = collection.findAndModify(event, EVENT_COMMENTS_FIELDS, null, false, update, true, false)
         if (doc != null) return doc
         throw new EventNotFound
@@ -85,7 +85,8 @@ object EventStorageService extends Storage {
             "loc" -> new DBGeoPoint(event.x, event.y),
             "tags" -> event.tags,
             "distance" -> event.distance,
-            "pace" -> event.pace
+            "pace" -> event.pace,
+            UPDATED_AT -> new Date().getTime
         )
 
         val query = MongoDBObject("_id" -> event_id, "user.id" -> user.id)
@@ -160,6 +161,7 @@ object EventStorageService extends Storage {
         put("pace", event.pace)
         put("deleted", false)
         put("spots", 1)
+        put(UPDATED_AT, new Date().getTime)
     }
 
     private class DBEventComment(user: User, msg: String) extends BasicDBObject {
