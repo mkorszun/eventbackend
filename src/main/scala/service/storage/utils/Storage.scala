@@ -33,6 +33,10 @@ trait Storage {
         return steps
     }
 
+    def aggregate(collection: DBCollection, steps: java.util.List[DBObject]): Cursor = {
+        collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR))
+    }
+
     def toArray(results: Cursor): Array[String] = {
         return toArray(results, "_id").res1
     }

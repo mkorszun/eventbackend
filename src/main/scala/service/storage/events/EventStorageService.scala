@@ -2,9 +2,9 @@ package service.storage.events
 
 import java.util.{Calendar, Date}
 
-import com.mongodb.DBCursor
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBList, MongoDBListBuilder, MongoDBObject}
+import com.mongodb.{Cursor, DBCursor}
 import model.event.Event
 import model.user.{PublicUser, User}
 import service.storage.users.UserStorageService
@@ -119,14 +119,8 @@ object EventStorageService extends Storage {
         collection.update(MongoDBObject("participants.id" -> id), update, false, true)
     }
 
-    def getEventParticipants(id: String): GroupResult = {
-        val steps: java.util.List[DBObject] = aggregationSteps(Array(
-            MongoDBObject("$match" -> MongoDBObject("_id" -> id)),
-            MongoDBObject("$project" -> MongoDBObject("a" -> "$participants.id", "b" -> "$headline")),
-            MongoDBObject("$unwind" -> "$a"),
-            MongoDBObject("$group" -> new Group("$a", "$b")))
-        )
-        return toArray(collection.aggregate(steps, AggregationOptions(AggregationOptions.CURSOR)), "_id")
+    def aggregate(steps: java.util.List[DBObject]): Cursor = {
+        aggregate(collection, steps)
     }
 
     // Helpers =======================================================================================================//

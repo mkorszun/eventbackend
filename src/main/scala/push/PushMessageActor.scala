@@ -3,9 +3,13 @@ package push
 import java.util.concurrent.Executors
 
 import akka.actor.{Actor, ActorLogging, Props}
+import com.mongodb
+import com.mongodb.casbah.Imports._
+import com.mongodb.casbah.commons.MongoDBObject
 import model.user.User
 import service.aws.SNSClient
 import service.storage.events.EventStorageService
+import service.storage.events.EventStorageService._
 import service.storage.users.UserStorageService
 import spray.json._
 
@@ -40,23 +44,41 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
             notifyParticipants(user, event_id, PushType.leaving_participant)
     }
 
-    private def notifyParticipants(user: User, event_id: String, msg_type: PushType.PushType): Unit = {
+    private def notifyParticipants(user: User, id: String, msg_type: PushType.PushType): Unit = {
         val f = Future {
-            val result: EventStorageService.GroupResult = EventStorageService.getEventParticipants(event_id)
-            for (token <- UserStorageService.getUserDevices(result.res1, msg_type) diff user.devices.get) {
-                val default = alert(msg_type, result.res2, user.fullName)
-                val params = new Params(event_id, result.res2, msg_type.toString, user.fullName)
-                val APNS = new APNS(new APS(1, default, "default"), params).toJson.toString()
-                val GCM = new GCM(new DATA(default, params)).toJson.toString()
-                val payload = new PushMessage(default, GCM, APNS, APNS)
-                println(payload.toJson.toString())
+
+            val fields = MongoDBObject("participants" -> "$participants.id",
+                "headline" -> "$headline", "updated_at" -> "$updated_at",
+                "comments_count" -> "$comments_count")
+
+            val cursor = EventStorageService.aggregate(aggregationSteps(Array(
+                MongoDBObject("$match" -> MongoDBObject("_id" -> id)),
+                MongoDBObject("$project" -> fields)
+            )))
+
+            val results: mongodb.DBObject = cursor.next()
+            cursor.close()
+
+            val participants = toArray(results.get("participants").asInstanceOf[BasicDBList])
+            val headline = results.getAs[String]("headline").get
+            val updated_at = results.getAs[Long]("updated_at").get
+            val comments_count = results.getAs[Double]("comments_count").get.toLong
+
+            val default = alert(msg_type, headline, user.fullName)
+            val params = new Params(id, headline, msg_type.toString, user.fullName, updated_at, comments_count)
+            val APNS = new APNS(new APS(1, default, "default"), params).toJson.toString()
+            val GCM = new GCM(new DATA(default, params)).toJson.toString()
+            val payload = new PushMessage(default, GCM, APNS, APNS)
+            println(payload.toJson.toString())
+
+            for (token <- UserStorageService.getUserDevices(participants, msg_type) diff user.devices.get) {
                 if (!push(token, payload.toJson.toString())) deviceActor ! UnregisterDevice(null, token)
             }
         }
 
         f onFailure {
             case e =>
-                log.error(e, f"Failed to send push message: $msg_type for event: $event_id")
+                log.error(e, f"Failed to send push message: $msg_type for event: $id")
         }
     }
 

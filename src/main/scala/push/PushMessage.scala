@@ -12,10 +12,10 @@ case class APS(content_available: Int, alert: String, sound: String)
 
 case class DATA(message: String, params: Params)
 
-case class Params(event_id: String, event_name: String, msg_type: String, user_name: String)
+case class Params(event_id: String, event_name: String, msg_type: String, user_name: String, updated_at: Long, comments_count: Long)
 
 object Params extends DefaultJsonProtocol {
-    implicit val format = jsonFormat4(Params.apply)
+    implicit val format = jsonFormat6(Params.apply)
 }
 
 object DATA extends DefaultJsonProtocol {
