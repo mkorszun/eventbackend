@@ -49,7 +49,7 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
 
             val fields = MongoDBObject("participants" -> "$participants.id",
                 "headline" -> "$headline", "updated_at" -> "$updated_at",
-                "comments_count" -> "$comments_count")
+                "comments_count" -> "$comments_count", "timestamp" -> "$timestamp")
 
             val cursor = EventStorageService.aggregate(aggregationSteps(Array(
                 MongoDBObject("$match" -> MongoDBObject("_id" -> id)),
@@ -63,13 +63,13 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
             val headline = results.getAs[String]("headline").get
             val updated_at = results.getAs[Long]("updated_at").get
             val comments_count = results.getAs[Double]("comments_count").get.toLong
+            val timestamp = results.getAs[Long]("timestamp").get
 
             val default = alert(msg_type, headline, user.fullName)
-            val params = new Params(id, headline, msg_type.toString, user.fullName, updated_at, comments_count)
+            val params = new Params(id, headline, msg_type.toString, user.fullName, updated_at, comments_count, timestamp)
             val APNS = new APNS(new APS(1, default, "default"), params).toJson.toString()
             val GCM = new GCM(new DATA(default, params)).toJson.toString()
             val payload = new PushMessage(default, GCM, APNS, APNS)
-            println(payload.toJson.toString())
 
             for (token <- UserStorageService.getUserDevices(participants, msg_type) diff user.devices.get) {
                 if (!push(token, payload.toJson.toString())) deviceActor ! UnregisterDevice(null, token)
