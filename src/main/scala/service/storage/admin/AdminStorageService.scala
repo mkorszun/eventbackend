@@ -15,7 +15,7 @@ trait AdminStorageService extends Storage {
     val collection = getCollection("events")
 
     def adminList(): DBCursor = {
-        return collection.find(MongoDBObject(), EVENT_LIST_ADMIN_FIELDS)
+        return collection.find(MongoDBObject(), EVENT_LIST_ADMIN_FIELDS).sort(MongoDBObject("timestamp" -> 1))
     }
 
     def adminCreate(event: AdminEvent): Unit = {
