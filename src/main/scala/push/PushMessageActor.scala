@@ -62,7 +62,7 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
             val participants = toArray(results.get("participants").asInstanceOf[BasicDBList])
             val headline = results.getAs[String]("headline").get
             val updated_at = results.getAs[Long]("updated_at").get
-            val comments_count = results.getAs[Double]("comments_count").get.toLong
+            val comments_count = results.getAs[Int]("comments_count").get
             val timestamp = results.getAs[Long]("timestamp").get
 
             val default = alert(msg_type, headline, user.fullName)
