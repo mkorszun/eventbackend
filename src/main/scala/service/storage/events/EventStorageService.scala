@@ -31,7 +31,7 @@ object EventStorageService extends Storage {
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
         val query = MongoDBObject("loc" -> MongoDBObject("$near" -> geo), "timestamp" -> timestamp)
         if (tags.length > 0) query.put("tags", MongoDBObject("$regex" -> tags(0)))
-        return collection.find(query, EVENT_LIST_FIELDS)
+        return collection.find(query, EVENT_LIST_FIELDS).sort(MongoDBObject("timestamp" -> 1))
     }
 
     def getEvent(event_id: String): DBObject = {
