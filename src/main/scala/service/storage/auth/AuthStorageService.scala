@@ -1,5 +1,8 @@
 package service.storage.auth
 
+import java.util.Date
+
+import auth.BearerTokenGenerator
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import model.token.Token
@@ -9,6 +12,7 @@ import service.storage.utils.Storage
 object AuthStorageService extends Storage {
 
     val collection = getCollection("users")
+    val password_reset_tokens = getCollection("password_reset_tokens")
 
     val ID = "_id"
     val EMAIL = "email"
@@ -18,6 +22,8 @@ object AuthStorageService extends Storage {
     val VERIFIED = "verified"
     val CONFIRMATION_TOKEN = "confirmation_token"
     val UNVERIFIED_SINCE = "unverified_since"
+    val PASSWORD_RESET_TOKEN = "token"
+    val PASSWORD = "password"
 
     def createUser(user: User): User = {
         collection.insert(User.toDocument(user))
@@ -46,5 +52,17 @@ object AuthStorageService extends Storage {
         val update = $set(VERIFIED -> true) ++ $unset(UNVERIFIED_SINCE, CONFIRMATION_TOKEN)
         val doc = collection.findAndModify(query, MongoDBObject(), null, false, update, true, false)
         if (doc == null) throw new UserExpiredException
+    }
+
+    def createPasswordResetToken(id: String): String = {
+        val token = Option(BearerTokenGenerator.generateSHAToken(id))
+        password_reset_tokens.insert(MongoDBObject(ID -> id, PASSWORD_RESET_TOKEN -> token, CREATED_AT -> new Date()))
+        return token.get
+    }
+
+    def resetPassword(id: String, token: String, password: String): Unit = {
+        val doc = password_reset_tokens.find(MongoDBObject(ID -> id, PASSWORD_RESET_TOKEN -> token))
+        if (doc == null) throw new InvalidResetTokenException
+        collection.update(MongoDBObject(ID -> id), $set(PASSWORD -> password))
     }
 }

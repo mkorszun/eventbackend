@@ -7,7 +7,7 @@ import com.mongodb.casbah.{Imports, MongoClient, MongoClientURI, MongoDB}
 object DBInitWorker {
 
     val UNIQUE = MongoDBObject("unique" -> true)
-    val collections: Array[String] = Array("events", "users")
+    val collections: Array[String] = Array("events", "users", "password_reset_tokens")
 
     val event_indexes: Array[Imports.DBObject] = Array(
         MongoDBObject("participants.id" -> 1, "timestamp" -> 1),
@@ -40,6 +40,7 @@ object DBInitWorker {
         println("Creating collections")
         val users: DBCollection = db.getCollection("users")
         val events: DBCollection = db.getCollection("events")
+        val password_reset_tokens = db.getCollection("password_reset_tokens")
 
         for (collection <- collections) {
             if (!db.collectionExists(collection)) db.createCollection(collection, MongoDBObject())
@@ -51,6 +52,7 @@ object DBInitWorker {
         for (idx <- unique_user_indexes) users.createIndex(idx, UNIQUE)
 
         users.createIndex(MongoDBObject("unverified_since" -> 1), MongoDBObject("expireAfterSeconds" -> 1440))
+        password_reset_tokens.createIndex(MongoDBObject("created_at" -> 1), MongoDBObject("expireAfterSeconds" -> 3600))
     }
 
     def main(args: Array[String]): Unit = {

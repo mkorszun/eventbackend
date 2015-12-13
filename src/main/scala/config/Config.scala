@@ -18,11 +18,13 @@ trait Config {
     val PUSH_MSG_LEAVING_PARTICIPANT = sys.env.get("PUSH_MSG_LEAVING_PARTICIPANT").getOrElse("%s odszedł z Twojego treningu %s")
     val PUSH_MSG_UPDATED_EVENT = sys.env.get("PUSH_MSG_UPDATED_EVENT").getOrElse("%s zaktualizował trening %s")
     val CONFIRMATION_LINK_BASE = sys.env.get("CONFIRMATION_LINK_BASE").getOrElse("https://development-biegajmy.cloudcontrolled.com/user/%s/confirm?token=%s")
+    val RESET_LINK_BASE = sys.env.get("RESET_LINK_BASE").getOrElse("https://development-biegajmy.cloudcontrolled.com/user/%s/password_reset?token=%s")
     val SENDGRID_USERNAME = sys.env.get("SENDGRID_USERNAME").getOrElse("depp6492dt8@cloudcontrolled.com")
     val SENDGRID_PASSWORD = sys.env.get("SENDGRID_PASSWORD").getOrElse("corcosa93336")
     val MAILER_SENDER = sys.env.get("MAILER_SENDER").getOrElse("noreply@biegaj.my")
     val MAILER_EXECUTOR_SIZE = System.getenv("REGISTRATION_EXECUTOR_SIZE").toInt
     val ACCOUNT_CONFIRMATION_TITLE = sys.env.get("ACCOUNT_CONFIRMATION_TITLE").getOrElse("Biegajmy - Link aktywacyjny")
+    val PASSWORD_RESET_TITLE = sys.env.get("PASSWORD_RESET_TITLE").getOrElse("Biegajmy - reset hasła")
     val CONFIRMATION_REDIRECT = sys.env.get("CONFIRMATION_REDIRECT").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/registration_confirmation/index.html")
     val DEFAULT_PROFILE_PIC = sys.env.get("DEFAULT_PROFILE_PIC").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/profile_pic.png")
 }

@@ -6,11 +6,12 @@ import _root_.directives.{JsonUserDirective, UserPermissions, UserRegistration}
 import akka.actor.{ActorSystem, Props}
 import com.wordnik.swagger.annotations._
 import config.Config
-import mailer.{AccountConfirmation, MailerActor}
+import mailer.{AccountConfirmation, MailerActor, PasswordReset}
 import model.APIResponse
 import model.event.Event
 import model.token.Token
 import model.user.{NewUser, PublicUser, User, UserDevice}
+import org.mindrot.jbcrypt.BCrypt
 import push.{DeviceRegistrationActor, RegisterDevice}
 import service.photo.PhotoStorageService
 import service.storage.auth.AuthStorageService
@@ -54,10 +55,12 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
                             }
                         } ~ pathPrefix("confirm") {
                             confirm(id)
+                        } ~ pathPrefix("password_reset") {
+                            password_reset3(id)
                         }
                 } ~
                 pathPrefix("password_reset") {
-                    password_reset()
+                    password_reset1() ~ password_reset2()
                 }
         }
     }
@@ -326,13 +329,74 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
     @Path("/password_reset")
     @ApiOperation(
         httpMethod = "GET",
-        value = "Reset password")
-    def password_reset(): Route = {
+        value = "Display password reset request form")
+    def password_reset1(): Route = {
         import format.APIResponseFormat._
         import spray.httpx.SprayJsonSupport._
         get {
             complete {
                 APIResponse("OK")
+            }
+        }
+    }
+
+    @Path("/password_reset")
+    @ApiOperation(
+        httpMethod = "POST",
+        value = "Submit password reset form for given email")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "email",
+            value = "User email",
+            required = true,
+            dataType = "string",
+            paramType = "query")
+    ))
+    def password_reset2(): Route = {
+        import format.APIResponseFormat._
+        import spray.httpx.SprayJsonSupport._
+        post {
+            parameters('email.as[String]) { email =>
+                complete {
+                    val user = AuthStorageService.loadUserByEmail(email).get
+                    val token = AuthStorageService.createPasswordResetToken(user.id)
+                    mailerActor ! PasswordReset(user.id, token, email)
+                    APIResponse("OK")
+                }
+            }
+        }
+    }
+
+    @Path("/{user_id}/password_reset")
+    @ApiOperation(
+        httpMethod = "PUT",
+        value = "Send updated password")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "token",
+            value = "Password reset token",
+            required = true,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "password",
+            value = "New password",
+            required = true,
+            dataType = "string",
+            paramType = "query")
+    ))
+    def password_reset3(id: String): Route = {
+        import format.APIResponseFormat._
+        import spray.httpx.SprayJsonSupport._
+        put {
+            anyParams('token.as[String], 'password.as[String]) { (token, password) =>
+                checkCredentials(password) { ok =>
+                    complete {
+                        val passwordHash = BCrypt.hashpw(password, BCrypt.gensalt())
+                        AuthStorageService.resetPassword(id, token, passwordHash)
+                        APIResponse("OK")
+                    }
+                }
             }
         }
     }
