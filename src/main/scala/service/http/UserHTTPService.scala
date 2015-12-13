@@ -56,7 +56,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
                         } ~ pathPrefix("confirm") {
                             confirm(id)
                         } ~ pathPrefix("password_reset") {
-                            password_reset3(id)
+                            password_reset3(id) ~ password_reset4(id)
                         }
                 } ~
                 pathPrefix("password_reset") {
@@ -343,7 +343,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
     @Path("/password_reset")
     @ApiOperation(
         httpMethod = "POST",
-        value = "Submit password reset form for given email")
+        value = "Submit password reset request form")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(
             name = "email",
@@ -369,8 +369,30 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
 
     @Path("/{user_id}/password_reset")
     @ApiOperation(
+        httpMethod = "GET",
+        value = "Display new password form")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(
+            name = "token",
+            value = "Password reset token",
+            required = true,
+            dataType = "string",
+            paramType = "query")
+    ))
+    def password_reset3(id: String): Route = {
+        import format.APIResponseFormat._
+        import spray.httpx.SprayJsonSupport._
+        get {
+            complete {
+                APIResponse("OK")
+            }
+        }
+    }
+
+    @Path("/{user_id}/password_reset")
+    @ApiOperation(
         httpMethod = "PUT",
-        value = "Send updated password")
+        value = "Submit new password form")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(
             name = "token",
@@ -385,7 +407,7 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
             dataType = "string",
             paramType = "query")
     ))
-    def password_reset3(id: String): Route = {
+    def password_reset4(id: String): Route = {
         import format.APIResponseFormat._
         import spray.httpx.SprayJsonSupport._
         put {
