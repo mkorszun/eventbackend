@@ -56,7 +56,8 @@ object AuthStorageService extends Storage {
 
     def createPasswordResetToken(id: String): String = {
         val token = Option(BearerTokenGenerator.generateSHAToken(id))
-        password_reset_tokens.insert(MongoDBObject(ID -> id, PASSWORD_RESET_TOKEN -> token, CREATED_AT -> new Date()))
+        val doc = MongoDBObject(PASSWORD_RESET_TOKEN -> token, CREATED_AT -> new Date())
+        password_reset_tokens.update(MongoDBObject(ID -> id), doc, true, false)
         return token.get
     }
 

@@ -8,7 +8,7 @@ import auth.providers.FacebookProvider.InvalidTokenException
 import model._
 import model.user.User
 import service.http._
-import service.storage.auth.{UserExpiredException, AuthStorageService}
+import service.storage.auth.{AuthStorageService, InvalidResetTokenException, UserExpiredException}
 import service.storage.events.{EventHasOtherParticipants, EventNotFound, UserAlreadyAdded, UserNotPresent}
 import spray.http.StatusCodes
 import spray.http.StatusCodes._
@@ -174,6 +174,12 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                     requestUri { uri =>
                         log.warning("Request to {} could not be handled normally", uri)
                         val error: APIError = new APIError(e.msg)
+                        complete((BadRequest, error))
+                    }
+                case e: InvalidResetTokenException =>
+                    requestUri { uri =>
+                        log.warning("Request to {} could not be handled normally", uri)
+                        val error: APIError = new APIError("Invalid reset token")
                         complete((BadRequest, error))
                     }
                 case e: Exception =>
