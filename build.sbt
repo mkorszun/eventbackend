@@ -38,8 +38,6 @@ libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.10.32"
 
 libraryDependencies += "org.mindrot" % "jbcrypt" % "0.3m"
 
-libraryDependencies += "com.sendgrid" % "sendgrid-java" % "2.2.2"
-
 scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",

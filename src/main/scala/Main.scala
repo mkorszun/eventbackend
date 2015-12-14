@@ -160,7 +160,7 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                     }
                 case e: com.mongodb.DuplicateKeyException =>
                     requestUri { uri =>
-                        log.warning("Request to {} could not be handled normally", uri)
+                        log.error(e, "Request to {} could not be handled normally", uri)
                         val error: APIError = new APIError("Email already exists")
                         complete((Conflict, error))
                     }
