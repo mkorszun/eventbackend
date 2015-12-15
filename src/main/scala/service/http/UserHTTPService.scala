@@ -16,7 +16,7 @@ import push.{DeviceRegistrationActor, RegisterDevice}
 import service.photo.PhotoStorageService
 import service.storage.auth.AuthStorageService
 import service.storage.events.EventStorageService
-import service.storage.users.UserStorageService
+import service.storage.users.{UserNotFoundException, UserStorageService}
 import spray.http.CacheDirectives.`max-age`
 import spray.http.HttpHeaders.`Cache-Control`
 import spray.http.StatusCodes._
@@ -358,7 +358,11 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
         post {
             parameters('email.as[String]) { email =>
                 complete {
-                    val user = AuthStorageService.loadUserByEmail(email).get
+                    val user = AuthStorageService.loadUserByEmail(email) match {
+                        case Some(user) => user
+                        case None => throw new UserNotFoundException
+                    }
+
                     val token = AuthStorageService.createPasswordResetToken(user.id)
                     mailerActor ! PasswordReset(user.id, token, email)
                     APIResponse("OK")
