@@ -331,12 +331,8 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
         httpMethod = "GET",
         value = "Display password reset request form")
     def password_reset1(): Route = {
-        import format.APIResponseFormat._
-        import spray.httpx.SprayJsonSupport._
         get {
-            complete {
-                APIResponse("OK")
-            }
+            getFromResource("public/password_reset.html")
         }
     }
 
@@ -384,12 +380,8 @@ trait UserHTTPService extends HttpService with UserPermissions with Config with 
             paramType = "query")
     ))
     def password_reset3(id: String): Route = {
-        import format.APIResponseFormat._
-        import spray.httpx.SprayJsonSupport._
         get {
-            complete {
-                APIResponse("OK")
-            }
+            getFromResource("public/password_new.html")
         }
     }
 
