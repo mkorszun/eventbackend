@@ -62,7 +62,7 @@ object AuthStorageService extends Storage {
     }
 
     def resetPassword(id: String, token: String, password: String): Unit = {
-        val doc = password_reset_tokens.find(MongoDBObject(ID -> id, PASSWORD_RESET_TOKEN -> token))
+        val doc = password_reset_tokens.findOne(MongoDBObject(ID -> id, PASSWORD_RESET_TOKEN -> token))
         if (doc == null) throw new InvalidResetTokenException
         collection.update(MongoDBObject(ID -> id), $set(PASSWORD -> password))
     }
