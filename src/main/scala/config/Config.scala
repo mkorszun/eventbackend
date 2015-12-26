@@ -24,5 +24,6 @@ trait Config {
     val ACCOUNT_CONFIRMATION_TITLE = sys.env.get("ACCOUNT_CONFIRMATION_TITLE").getOrElse("Biegajmy - Link aktywacyjny")
     val PASSWORD_RESET_TITLE = sys.env.get("PASSWORD_RESET_TITLE").getOrElse("Biegajmy - reset hasła")
     val CONFIRMATION_REDIRECT = sys.env.get("CONFIRMATION_REDIRECT").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/registration_confirmation/index.html")
+    val CONFIRMATION_REDIRECT_ERROR = sys.env.get("CONFIRMATION_REDIRECT").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/registration_confirmation/error.html")
     val DEFAULT_PROFILE_PIC = sys.env.get("DEFAULT_PROFILE_PIC").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/profile_pic.png")
 }

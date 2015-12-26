@@ -5,6 +5,7 @@ import _root_.directives.{InvalidCredentialsException, UnauthorizedException}
 import akka.actor._
 import auth.TokenAuthenticator
 import auth.providers.FacebookProvider.InvalidTokenException
+import config.Config
 import model._
 import model.user.User
 import service.http._
@@ -20,7 +21,7 @@ import spray.util.LoggingContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object Main extends App with SimpleRoutingApp with CORSSupport {
+object Main extends App with SimpleRoutingApp with CORSSupport with Config {
 
     implicit val system = ActorSystem("my-system")
 
@@ -174,8 +175,7 @@ object Main extends App with SimpleRoutingApp with CORSSupport {
                 case e: UserExpiredException =>
                     requestUri { uri =>
                         log.warning("Request to {} could not be handled normally", uri)
-                        val error: APIError = new APIError("User did not confirmed within 4h. Recreate.")
-                        complete((NotFound, error))
+                        redirect(CONFIRMATION_REDIRECT_ERROR, MovedPermanently)
                     }
                 case e: InvalidCredentialsException =>
                     requestUri { uri =>
