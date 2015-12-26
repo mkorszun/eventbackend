@@ -27,7 +27,8 @@ class MailerActor extends Actor with ActorLogging with Config {
             val f = Future {
                 val confirmation_link = String.format(CONFIRMATION_LINK_BASE, id, token)
                 log.info(f"Sending confirmation link $confirmation_link to $email")
-                sendEmail(email, ACCOUNT_CONFIRMATION_TITLE, confirmation_link)
+                val body = String.format(CONFIRMATION_EMAIL, confirmation_link)
+                sendEmail(email, ACCOUNT_CONFIRMATION_TITLE, body)
             }
 
             f onFailure {
@@ -38,7 +39,8 @@ class MailerActor extends Actor with ActorLogging with Config {
             val f = Future {
                 val reset_link = String.format(RESET_LINK_BASE, id, token)
                 log.info(f"Sending reset link $reset_link to $email")
-                sendEmail(email, PASSWORD_RESET_TITLE, reset_link)
+                val body = String.format(PASSWORD_RESET_EMAIL, reset_link)
+                sendEmail(email, PASSWORD_RESET_TITLE, body)
             }
 
             f onFailure {
@@ -51,7 +53,7 @@ class MailerActor extends Actor with ActorLogging with Config {
         val destination: Destination = new Destination().withToAddresses(to)
         val subject: Content = new Content().withData(title)
         val textBody: Content = new Content().withData(content)
-        val body: Body = new Body().withText(textBody)
+        val body: Body = new Body().withHtml(textBody)
 
         val message: Message = new Message().withSubject(subject).withBody(body)
         val request: SendEmailRequest = new SendEmailRequest()

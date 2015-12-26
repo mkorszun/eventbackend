@@ -26,4 +26,6 @@ trait Config {
     val CONFIRMATION_REDIRECT = sys.env.get("CONFIRMATION_REDIRECT").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/registration_confirmation/index.html")
     val CONFIRMATION_REDIRECT_ERROR = sys.env.get("CONFIRMATION_REDIRECT").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/registration_confirmation/error.html")
     val DEFAULT_PROFILE_PIC = sys.env.get("DEFAULT_PROFILE_PIC").getOrElse("https://s3-eu-west-1.amazonaws.com/biegajmy/profile_pic.png")
+    val CONFIRMATION_EMAIL = sys.env.get("CONFIRMATION_EMAIL").getOrElse("<p><h4>Potwierdź rejestrację klikając w <a href=\"%s\">link</a>.</h4><img src=\"https://s3-eu-west-1.amazonaws.com/biegajmy/logo.png\"></p>")
+    val PASSWORD_RESET_EMAIL = sys.env.get("CONFIRMATION_EMAIL").getOrElse("<p><h4>Aby zmienić hasło kliknij w <a href=\"%s\">link</a>.</h4><img src=\"https://s3-eu-west-1.amazonaws.com/biegajmy/logo.png\"></p>")
 }
