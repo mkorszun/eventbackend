@@ -364,6 +364,11 @@ trait EventHTTPService extends HttpService with Config {
     }
 
     private def tags(t: Option[String]): Array[String] = {
-        return if (t.nonEmpty) t.get.split(",+") else Array.empty[String]
+        return if (t.nonEmpty) {
+            val split: Array[String] = t.get.split(",+")
+            split ++ split.map(_.replaceAll("\\s", ""))
+        } else {
+            Array.empty[String]
+        }
     }
 }
