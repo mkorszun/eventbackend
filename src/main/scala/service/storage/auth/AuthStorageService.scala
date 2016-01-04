@@ -3,6 +3,7 @@ package service.storage.auth
 import java.util.Date
 
 import auth.BearerTokenGenerator
+import com.mongodb.DuplicateKeyException
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import model.token.Token
@@ -26,8 +27,13 @@ object AuthStorageService extends Storage {
     val PASSWORD = "password"
 
     def createUser(user: User): User = {
-        collection.insert(User.toDocument(user))
-        return user
+        try {
+            collection.insert(User.toDocument(user))
+            return user
+        } catch {
+            case e: DuplicateKeyException =>
+                throw new EmailAlreadyExists
+        }
     }
 
     def getOrCreate(user: User): Token = {

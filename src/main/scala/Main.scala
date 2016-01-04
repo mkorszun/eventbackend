@@ -9,7 +9,7 @@ import config.Config
 import model._
 import model.user.User
 import service.http._
-import service.storage.auth.{AuthStorageService, InvalidResetTokenException, UserExpiredException}
+import service.storage.auth.{AuthStorageService, EmailAlreadyExists, InvalidResetTokenException, UserExpiredException}
 import service.storage.events.{EventHasOtherParticipants, EventNotFound, UserAlreadyAdded, UserNotPresent}
 import service.storage.users.UserNotFoundException
 import spray.http.StatusCodes
@@ -169,6 +169,12 @@ object Main extends App with SimpleRoutingApp with CORSSupport with Config {
                 case e: com.mongodb.DuplicateKeyException =>
                     requestUri { uri =>
                         log.error(e, "Request to {} could not be handled normally", uri)
+                        val error: APIError = new APIError("Email already exists")
+                        complete((Conflict, error))
+                    }
+                case e: EmailAlreadyExists =>
+                    requestUri { uri =>
+                        log.warning("Request to {} could not be handled normally", uri)
                         val error: APIError = new APIError("Email already exists")
                         complete((Conflict, error))
                     }

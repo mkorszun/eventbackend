@@ -2,12 +2,13 @@ package service.storage.users
 
 import java.util.concurrent.Executors
 
-import com.mongodb.DBObject
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{Imports, MongoDBObject}
+import com.mongodb.{CommandFailureException, DBObject, DuplicateKeyException}
 import model.user.{PublicUser, User, UserDeviceSettings}
 import push.PushType
 import push.PushType.PushType
+import service.storage.auth.EmailAlreadyExists
 import service.storage.events.EventStorageService
 import service.storage.utils.Storage
 
@@ -24,19 +25,25 @@ object UserStorageService extends Storage {
 
     def updateUser(id: String, token: String, user: PublicUser): Option[PublicUser] = {
 
-        val update = $set(
-            "first_name" -> user.first_name,
-            "last_name" -> user.last_name,
-            "bio" -> user.bio,
-            "telephone" -> user.telephone,
-            "www" -> user.www,
-            "email" -> user.email,
-            "settings" -> UserDeviceSettings.toDocument(user.settings.get)
-        )
+        try {
 
-        val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
-        val doc = collection.findAndModify(query, null, null, false, update, true, false)
-        if (doc != null) Option(PublicUser.fromDocument(doc)) else None
+            val update = $set(
+                "first_name" -> user.first_name,
+                "last_name" -> user.last_name,
+                "bio" -> user.bio,
+                "telephone" -> user.telephone,
+                "www" -> user.www,
+                "email" -> user.email,
+                "settings" -> UserDeviceSettings.toDocument(user.settings.get)
+            )
+
+            val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
+            val doc = collection.findAndModify(query, null, null, false, update, true, false)
+            if (doc != null) Option(PublicUser.fromDocument(doc)) else None
+        } catch {
+            case _: DuplicateKeyException | _: CommandFailureException =>
+                throw new EmailAlreadyExists
+        }
     }
 
     def updatePhoto(id: String, token: String, photo_url: String): Option[PublicUser] = {
