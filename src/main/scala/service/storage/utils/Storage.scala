@@ -61,6 +61,10 @@ trait Storage {
 
     def toArray(obj: BasicDBList): Array[String] = (obj.toList map (_.toString)).toArray
 
+    def tags(t: Array[String]): String = {
+        (t ++ t.map(_.replaceAll("\\s", ""))).mkString("|")
+    }
+
     class Group(field: String, field1: String) extends BasicDBObject {
         put("_id", field1)
         put("aggregated", MongoDBObject("$addToSet" -> field))
