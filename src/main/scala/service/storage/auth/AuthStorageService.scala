@@ -3,7 +3,7 @@ package service.storage.auth
 import java.util.Date
 
 import auth.BearerTokenGenerator
-import com.mongodb.DuplicateKeyException
+import com.mongodb.{CommandFailureException, DuplicateKeyException}
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import model.token.Token
@@ -37,10 +37,15 @@ object AuthStorageService extends Storage {
     }
 
     def getOrCreate(user: User): Token = {
-        val query = MongoDBObject(PROVIDER_ID -> user.provider_id, PROVIDER -> user.provider)
-        val setOnInsert = MongoDBObject("$setOnInsert" -> User.toDocument(user))
-        val doc = collection.findAndModify(query, null, null, false, setOnInsert, true, true)
-        return Token.fromDocument(doc)
+        try {
+            val query = MongoDBObject(PROVIDER_ID -> user.provider_id, PROVIDER -> user.provider)
+            val setOnInsert = MongoDBObject("$setOnInsert" -> User.toDocument(user))
+            val doc = collection.findAndModify(query, null, null, false, setOnInsert, true, true)
+            return Token.fromDocument(doc)
+        } catch {
+            case _: DuplicateKeyException | _: CommandFailureException =>
+                throw new EmailAlreadyExists
+        }
     }
 
     def loadUserByEmail(email: String): Option[User] = {

@@ -42,7 +42,6 @@ object User {
             "bio" -> user.bio,
             "telephone" -> user.telephone,
             "www" -> user.www,
-            "email" -> user.email,
             "devices" -> user.devices,
             "settings" -> UserDeviceSettings.toDocument(new UserDeviceSettings(true, true, true)),
             "password" -> user.password,
@@ -51,6 +50,7 @@ object User {
         )
 
         if (!user.verified) doc.put("unverified_since", new Date())
+        if (user.email.isDefined && !user.email.get.isEmpty) doc.put("email", user.email)
         return doc
     }
 
@@ -63,6 +63,12 @@ object User {
     }
 
     def fromDocument(doc: DBObject): User = {
+        val email: Option[String] = if (doc.contains("email")) {
+            Option(doc.get("email").asInstanceOf[String])
+        } else {
+            None
+        }
+
         User(
             doc.get("_id").toString,
             doc.get("provider_id").toString,
@@ -74,7 +80,7 @@ object User {
             doc.get("bio").toString,
             Option(doc.get("telephone").asInstanceOf[String]),
             Option(doc.get("www").asInstanceOf[String]),
-            Option(doc.get("email").asInstanceOf[String]),
+            email,
             Option(toArray(doc.get("devices").asInstanceOf[BasicDBList])),
             Option(doc.get("password").toString),
             doc.getAs[Boolean]("verified").getOrElse(true),
