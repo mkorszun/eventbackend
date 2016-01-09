@@ -33,12 +33,17 @@ object UserStorageService extends Storage {
                 "bio" -> user.bio,
                 "telephone" -> user.telephone,
                 "www" -> user.www,
-                "email" ->  (if (user.email.get.isEmpty) None else user.email),
                 "settings" -> UserDeviceSettings.toDocument(user.settings.get)
             )
 
+            val update2 = if (user.email.isDefined && !user.email.get.isEmpty) {
+                update ++ $set("email" -> user.email)
+            } else {
+                update ++ $unset("email")
+            }
+
             val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
-            val doc = collection.findAndModify(query, null, null, false, update, true, false)
+            val doc = collection.findAndModify(query, null, null, false, update2, true, false)
             if (doc != null) Option(PublicUser.fromDocument(doc)) else None
         } catch {
             case _: DuplicateKeyException | _: CommandFailureException =>
