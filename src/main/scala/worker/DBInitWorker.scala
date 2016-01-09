@@ -6,7 +6,7 @@ import com.mongodb.casbah.{Imports, MongoClient, MongoClientURI, MongoDB}
 
 object DBInitWorker {
 
-    val UNIQUE = MongoDBObject("unique" -> true)
+    val UNIQUE = MongoDBObject("unique" -> true, "sparse" -> true)
     val collections: Array[String] = Array("events", "users", "password_reset_tokens")
 
     val event_indexes: Array[Imports.DBObject] = Array(
