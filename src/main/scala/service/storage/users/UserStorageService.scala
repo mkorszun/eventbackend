@@ -33,7 +33,7 @@ object UserStorageService extends Storage {
                 "bio" -> user.bio,
                 "telephone" -> user.telephone,
                 "www" -> user.www,
-                "email" -> user.email,
+                "email" ->  (if (user.email.get.isEmpty) None else user.email),
                 "settings" -> UserDeviceSettings.toDocument(user.settings.get)
             )
 
