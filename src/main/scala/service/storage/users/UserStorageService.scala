@@ -27,7 +27,7 @@ object UserStorageService extends Storage {
 
         try {
 
-            val update = $set(
+            val update = MongoDBObject(
                 "first_name" -> user.first_name,
                 "last_name" -> user.last_name,
                 "bio" -> user.bio,
@@ -37,12 +37,14 @@ object UserStorageService extends Storage {
             )
 
             val update2 = if (user.email.isDefined && !user.email.get.isEmpty) {
-                update ++ $set("email" -> user.email)
+                update.put("email", user.email)
+                MongoDBObject("$set" -> update)
             } else {
-                update ++ $unset("email")
+                MongoDBObject("$set" -> update) ++ $unset("email")
             }
 
             val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
+            println(update2)
             val doc = collection.findAndModify(query, null, null, false, update2, true, false)
             if (doc != null) Option(PublicUser.fromDocument(doc)) else None
         } catch {
