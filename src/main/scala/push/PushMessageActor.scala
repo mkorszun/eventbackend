@@ -71,7 +71,13 @@ class PushMessageActor extends Actor with ActorLogging with SNSClient {
             val GCM = new GCM(new DATA(default, params)).toJson.toString()
             val payload = new PushMessage(default, GCM, APNS, APNS)
 
-            for (token <- UserStorageService.getUserDevices(participants, msg_type) diff user.devices.get) {
+            // iOS - only if settings enabled
+            for (token <- UserStorageService.getUserDevices(participants, msg_type, "APNS") diff user.devices.get) {
+                if (!push(token, payload.toJson.toString())) deviceActor ! UnregisterDevice(null, token)
+            }
+
+            // Android - all users
+            for (token <- UserStorageService.getUserDevices(participants, "GCM") diff user.devices.get) {
                 if (!push(token, payload.toJson.toString())) deviceActor ! UnregisterDevice(null, token)
             }
         }
