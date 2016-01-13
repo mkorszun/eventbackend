@@ -44,7 +44,6 @@ object UserStorageService extends Storage {
             }
 
             val query: Imports.DBObject = MongoDBObject("_id" -> id, "token" -> token)
-            println(update2)
             val doc = collection.findAndModify(query, null, null, false, update2, true, false)
             if (doc != null) Option(PublicUser.fromDocument(doc)) else None
         } catch {
