@@ -49,6 +49,9 @@ object UserStorageService extends Storage {
         } catch {
             case _: DuplicateKeyException | _: CommandFailureException =>
                 throw new EmailAlreadyExists
+            case e: Exception =>
+                e.printStackTrace()
+                throw e
         }
     }
 
