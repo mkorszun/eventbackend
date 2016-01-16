@@ -4,6 +4,7 @@ import javax.ws.rs.Path
 
 import _root_.directives.JsonEventDirective
 import akka.actor.{ActorSystem, Props}
+import com.mongodb.DBObject
 import com.wordnik.swagger.annotations._
 import config.Config
 import model.APIResponse
@@ -155,7 +156,7 @@ trait EventHTTPService extends HttpService with Config {
             complete {
                 toJson {
                     val res = eventService.removeParticipant(id, user)
-                    pushActor ! LeavingParticipant(user, id)
+                    pushActor ! LeavingParticipant(user, id, res)
                     res
                 }
             }
@@ -185,7 +186,7 @@ trait EventHTTPService extends HttpService with Config {
             complete {
                 toJson {
                     val res = eventService.addParticipant(id, user)
-                    pushActor ! NewParticipant(user, id)
+                    pushActor ! NewParticipant(user, id, res)
                     res
                 }
             }
