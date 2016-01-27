@@ -31,12 +31,16 @@ object EventStorageService extends Storage {
             .sort(MongoDBObject("timestamp" -> 1))
     }
 
-    def findEvents(x: Double, y: Double, max: Long, phrases: Array[String]): DBCursor = {
+    def findEvents(x: Double, y: Double, max: Long, phrases: Array[String], last_id: Option[String],
+        limit: Option[Int]): DBCursor = {
         val geo = MongoDBObject("$geometry" -> new DBGeoPoint(x, y), "$maxDistance" -> max)
         val timestamp = MongoDBObject("$gte" -> Calendar.getInstance().getTime().getTime)
         val query = MongoDBObject("loc" -> MongoDBObject("$near" -> geo), "timestamp" -> timestamp)
         if (phrases.length > 0) query.put("tags", MongoDBObject("$regex" -> tags(phrases), "$options" -> "i"))
-        return collection.find(query, EVENT_LIST_FIELDS).sort(MongoDBObject("timestamp" -> 1))
+        if (!last_id.isEmpty) query.put("_id", MongoDBObject("$gt" -> last_id))
+
+        val result: DBCursor = collection.find(query, EVENT_LIST_FIELDS).sort(MongoDBObject("timestamp" -> 1))
+        if (limit.isEmpty) result else result.limit(limit.get)
     }
 
     def getEvent(event_id: String): DBObject = {

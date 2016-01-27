@@ -220,16 +220,28 @@ trait EventHTTPService extends HttpService with Config {
             value = "Comma separated tags",
             required = false,
             dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "last_id",
+            value = "Event id of the last element that client holds",
+            required = false,
+            dataType = "string",
+            paramType = "query"),
+        new ApiImplicitParam(
+            name = "limit",
+            value = "Page size limit",
+            required = false,
+            dataType = "integer",
             paramType = "query")
     ))
     def listEvents: Route = {
         get {
-            parameters('x.as[Double], 'y.as[Double], 'max.as[Long], 'tags.as[String] ?) {
-                (x, y, max, t) =>
+            parameters('x.as[Double], 'y.as[Double], 'max.as[Long], 'tags.as[String] ?, 'last_id.as[String] ?, 'limit.as[Int] ?) {
+                (x, y, max, t, last_id, limit) =>
                     respondWithHeader(`Cache-Control`(`max-age`(MAX_AGE_SEARCH))) {
                         complete {
                             toJson {
-                                eventService.findEvents(x, y, max, tags(t))
+                                eventService.findEvents(x, y, max, tags(t), last_id, limit)
                             }
                         }
                     }
